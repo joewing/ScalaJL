@@ -41,13 +41,13 @@ class Context[T](
 
   def enterScope: Context[T] = {
     val newScopeId = nextScopeId
-    val scope = new Scope[T](newScopeId, newScopeId, Map())
+    val scope = new Scope[T](newScopeId, currentScope, Map())
     new Context[T](stack, scopes + (newScopeId -> scope), newScopeId)
   }
 
   def leaveScope: Context[T] = new Context[T](stack, scopes, scopes(currentScope).parent)
 
-  def pushScope(scope: Int): Context[T] = new Context[T](currentScope +: stack, scopes, scope)
+  def pushScope(root: Int): Context[T] = new Context[T](currentScope +: stack, scopes, root).enterScope
 
   def popScope: Context[T] = new Context[T](stack.tail, scopes, stack.head).gc
 
