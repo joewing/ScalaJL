@@ -7,7 +7,7 @@ import net.joewing.jl.interpret._
 class DefineFunction extends SpecialFunction {
   // (define name value...)
 
-  def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) =
+  def check(context: Context[TypeResult], args: List[Token]): (Context[TypeResult], TypeResult) =
     args match {
       case IdentToken(name) :: rest =>
         val (resultContext, resultType) = Checker.run(context, rest)
@@ -17,7 +17,7 @@ class DefineFunction extends SpecialFunction {
         (context, InvalidTypeResult("invalid arguments to define"))
     }
 
-  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) =
+  def run(context: Context[ValueResult], args: List[Token]): (Context[ValueResult], ValueResult) =
     args match {
       case IdentToken(name) :: rest =>
         val (resultContext, resultValue) = Interpreter.run(context, rest)

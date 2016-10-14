@@ -15,4 +15,4 @@ case class LambdaTypeResult(
     scope: Int,
     args: List[TypeResult],
     ret: TypeResult)
-  extends TypeResult
+  extends TypeResult with LambdaResult

@@ -17,7 +17,7 @@ case class LambdaValueResult(
     scope: Int,
     parameters: List[String],
     tokens: List[Token])
-  extends ValueResult {
+  extends ValueResult with LambdaResult {
 
   override def toString = "<lambda>"
 }

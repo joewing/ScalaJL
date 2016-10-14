@@ -7,7 +7,7 @@ import net.joewing.jl.interpret._
 class IfFunction extends SpecialFunction {
   // (if cond true false)
 
-  def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
+  def check(context: Context[TypeResult], args: List[Token]): (Context[TypeResult], TypeResult) = {
     if (args.length != 3) {
       (context, InvalidTypeResult("wrong number of arguments to if"))
     }
@@ -23,7 +23,7 @@ class IfFunction extends SpecialFunction {
     }
   }
 
-  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
+  def run(context: Context[ValueResult], args: List[Token]): (Context[ValueResult], ValueResult) = {
     assert(args.length == 3)
     Interpreter.run(context, args.head) match {
       case (newContext, BooleanValueResult(true)) => Interpreter.run(newContext, args(1))

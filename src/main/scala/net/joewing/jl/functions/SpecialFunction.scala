@@ -5,7 +5,7 @@ import net.joewing.jl.check._
 import net.joewing.jl.interpret._
 
 abstract class SpecialFunction {
-  def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult)
-  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult)
+  def check(context: Context[TypeResult], args: List[Token]): (Context[TypeResult], TypeResult)
+  def run(context: Context[ValueResult], args: List[Token]): (Context[ValueResult], ValueResult)
 }
 
