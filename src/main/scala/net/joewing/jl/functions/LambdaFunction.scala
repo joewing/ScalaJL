@@ -22,8 +22,8 @@ class LambdaFunction extends SpecialFunction {
     }
 
   def check(context: Context[TypeResult], args: List[Token]): (Context[TypeResult], TypeResult) = {
-    if (args.length < 3) {
-      (context, InvalidTypeResult("at least 3 arguments required for lambda"))
+    if (args.length < 2) {
+      (context, InvalidTypeResult("at least 2 arguments required for lambda"))
     } else {
       getParameters(args.head) match {
         case None => (context, InvalidTypeResult("invalid parameter list"))
