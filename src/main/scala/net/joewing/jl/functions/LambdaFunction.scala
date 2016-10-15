@@ -21,7 +21,7 @@ class LambdaFunction extends SpecialFunction {
       case _ => None
     }
 
-  def check(context: Context[TypeResult], args: List[Token]): (Context[TypeResult], TypeResult) = {
+  def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
     if (args.length < 2) {
       (context, InvalidTypeResult("at least 2 arguments required for lambda"))
     } else {
@@ -33,19 +33,19 @@ class LambdaFunction extends SpecialFunction {
           }
           val nestedContext = context.enterScope.updateScope(parameterTypes)
           val (retContext, retType) = Checker.run(nestedContext, args.tail)
-          val newType = LambdaTypeResult(nestedContext.currentScope, retContext.valueList(parameters), retType)
+          val newType = LambdaTypeResult(nestedContext.stack, retContext.valueList(parameters), retType)
           val newContext = retContext.leaveScope
           (newContext, newType)
       }
     }
   }
 
-  def run(context: Context[ValueResult], args: List[Token]): (Context[ValueResult], ValueResult) = {
+  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
     assert(args.length >= 2)
     getParameters(args.head) match {
       case None => (context, NilValueResult())
       case Some(parameters) =>
-        (context, LambdaValueResult(context.currentScope, parameters, args.tail))
+        (context, LambdaValueResult(context.stack, parameters, args.tail))
     }
   }
 

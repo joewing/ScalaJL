@@ -7,8 +7,8 @@ import net.joewing.jl.interpret._
 class AddFunction extends SpecialFunction {
   // (add ...)
 
-  def check(context: Context[TypeResult], args: List[Token]): (Context[TypeResult], TypeResult) =
-    args.foldLeft((context, IntegerTypeResult()): (Context[TypeResult], TypeResult)) { (acc, token) =>
+  def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) =
+    args.foldLeft((context, IntegerTypeResult()): (CheckerContext, TypeResult)) { (acc, token) =>
       val (oldContext, oldType) = acc
       val (newContext, newType) = Checker.run(oldContext, token)
       (oldType, newType) match {
@@ -20,7 +20,7 @@ class AddFunction extends SpecialFunction {
       }
     }
 
-  def run(context: Context[ValueResult], args: List[Token]): (Context[ValueResult], ValueResult) = {
+  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
     args.foldLeft((context, IntegerValueResult(0))) { (acc, tok) =>
       val (oldContext, oldValue) = acc
       val (newContext, newValue) = Interpreter.run(oldContext, tok)

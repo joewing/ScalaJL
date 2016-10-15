@@ -2,19 +2,21 @@ package net.joewing.jl
 
 import net.joewing.jl.functions.Functions
 
-abstract class Runner[T : BaseResult] {
+abstract class Runner[T : BaseResult, C <: Context[T, C]] {
 
   protected val nil: T
 
-  def run(context: Context[T], token: Token): (Context[T], T)
+  protected def createContext(stack: List[ScopeId], scopes: Map[ScopeId, Scope[T]]): C
+
+  def run(context: C, token: Token): (C, T)
 
   private val builtins = Functions.apply[T]()
 
-  private val baseScope = new Scope[T](new ScopeId(), builtins)
+  private val baseScope: Scope[T] = new Scope[T](new ScopeId(), builtins)
 
-  private val baseContext = new Context[T](List(baseScope.id), Map(baseScope.id -> baseScope))
+  private val baseContext: C = createContext(List(baseScope.id), Map(baseScope.id -> baseScope))
 
-  final def run(context: Context[T], tokens: List[Token]): (Context[T], T) = {
+  final def run(context: C, tokens: List[Token]): (C, T) = {
     tokens.foldLeft((context, nil)) { (acc, token) =>
       val (oldContext, _) = acc
       run(oldContext, token)
@@ -22,7 +24,7 @@ abstract class Runner[T : BaseResult] {
   }
 
   final def run(lst: List[Token]): T = {
-    val result = lst.foldLeft((baseContext, nil): (Context[T], T)) { (acc, token) =>
+    val result = lst.foldLeft((baseContext, nil): (C, T)) { (acc, token) =>
       val (context, _) = acc
       run(context, token)
     }

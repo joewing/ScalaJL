@@ -2,30 +2,30 @@ package net.joewing.jl.interpret
 
 import net.joewing.jl._
 
-object Interpreter extends Runner[ValueResult] {
+object Interpreter extends Runner[ValueResult, InterpreterContext] {
 
   private[this] def runSpecial(
-      context: Context[ValueResult],
+      context: InterpreterContext,
       special: SpecialValueResult,
-      args: List[Token]): (Context[ValueResult], ValueResult) = {
+      args: List[Token]): (InterpreterContext, ValueResult) = {
     special.func.run(context, args)
   }
 
   private[this] def runLambda(
-      context: Context[ValueResult],
+      context: InterpreterContext,
       lambda: LambdaValueResult,
-      args: List[Token]): (Context[ValueResult], ValueResult) = {
+      args: List[Token]): (InterpreterContext, ValueResult) = {
     val actuals = args.map { run(context, _)._2 }
     val newValues = Map(lambda.parameters.zip(actuals): _*)
-    val nestedContext = context.pushScope(lambda.scope).updateScope(newValues)
+    val nestedContext = context.pushScope(lambda.stack).updateScope(newValues)
     val (retContext, retValue) = run(nestedContext, lambda.tokens)
-    (retContext.popScope, retValue)
+    (retContext.popScope(lambda.stack), retValue)
   }
 
   private[this] def runFunction(
-      context: Context[ValueResult],
+      context: InterpreterContext,
       func: ValueResult,
-      args: List[Token]): (Context[ValueResult], ValueResult) = {
+      args: List[Token]): (InterpreterContext, ValueResult) = {
     func match {
       case special @ SpecialValueResult(_) => runSpecial(context, special, args)
       case lambda @ LambdaValueResult(_, _, _) => runLambda(context, lambda, args)
@@ -34,9 +34,9 @@ object Interpreter extends Runner[ValueResult] {
   }
 
   private[this] def runFunction(
-      context: Context[ValueResult],
+      context: InterpreterContext,
       name: String,
-      args: List[Token]): (Context[ValueResult], ValueResult) = {
+      args: List[Token]): (InterpreterContext, ValueResult) = {
     context.lookup(name) match {
       case Some(func) => runFunction(context, func, args)
       case _ => (context, NilValueResult())
@@ -44,8 +44,8 @@ object Interpreter extends Runner[ValueResult] {
   }
 
   private[this] def runExpr(
-      context: Context[ValueResult],
-      tokens: List[Token]): (Context[ValueResult], ValueResult) = {
+      context: InterpreterContext,
+      tokens: List[Token]): (InterpreterContext, ValueResult) = {
     tokens match {
       case IdentToken(name) :: args => runFunction(context, name, args)
       case ExprToken(lst) :: args =>
@@ -57,9 +57,13 @@ object Interpreter extends Runner[ValueResult] {
     }
   }
 
-  override val nil: ValueResult = NilValueResult()
+  def createContext(
+      stack: List[ScopeId],
+      scopes: Map[ScopeId, Scope[ValueResult]]): InterpreterContext = new InterpreterContext(stack, scopes)
 
-  override def run(context: Context[ValueResult], token: Token): (Context[ValueResult], ValueResult) = {
+  val nil: ValueResult = NilValueResult()
+
+  def run(context: InterpreterContext, token: Token): (InterpreterContext, ValueResult) = {
     token match {
       case IdentToken(ident) =>
         context.lookup(ident) match {

@@ -8,7 +8,7 @@ abstract class ConditionalFunction extends SpecialFunction {
 
   protected def test[T : Ordering](left: T, right: T): Boolean
 
-  def check(context: Context[TypeResult], args: List[Token]): (Context[TypeResult], TypeResult) = {
+  def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
     if (args.length != 2) {
       (context, InvalidTypeResult("wrong number of arguments to conditional"))
     } else {
@@ -28,7 +28,7 @@ abstract class ConditionalFunction extends SpecialFunction {
     }
   }
 
-  def run(context: Context[ValueResult], args: List[Token]): (Context[ValueResult], ValueResult) = {
+  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
     assert(args.length == 2)
     val (leftContext, leftValue) = Interpreter.run(context, args.head)
     val (rightContext, rightValue) = Interpreter.run(leftContext, args(1))

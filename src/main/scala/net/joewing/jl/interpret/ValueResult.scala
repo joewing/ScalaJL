@@ -14,7 +14,7 @@ case class SpecialValueResult(func: SpecialFunction) extends ValueResult {
 }
 
 case class LambdaValueResult(
-    scope: ScopeId,
+    stack: List[ScopeId],
     parameters: List[String],
     tokens: List[Token])
   extends ValueResult with LambdaResult {

@@ -2,11 +2,15 @@ package net.joewing.jl.check
 
 import net.joewing.jl._
 
-object Checker extends Runner[TypeResult] {
+object Checker extends Runner[TypeResult, CheckerContext] {
 
-  override val nil: TypeResult = NilTypeResult()
+  protected def createContext(
+      stack: List[ScopeId],
+      scopes: Map[ScopeId, Scope[TypeResult]]): CheckerContext = new CheckerContext(stack, scopes)
 
-  override def run(context: Context[TypeResult], token: Token): (Context[TypeResult], TypeResult) = {
+  val nil: TypeResult = NilTypeResult()
+
+  def run(context: CheckerContext, token: Token): (CheckerContext, TypeResult) = {
     token match {
       case IdentToken(ident) =>
         context.lookup(ident) match {
@@ -20,7 +24,7 @@ object Checker extends Runner[TypeResult] {
     }
   }
 
-  private[this] def runExpr(context: Context[TypeResult], tokens: List[Token]): (Context[TypeResult], TypeResult) = {
+  private[this] def runExpr(context: CheckerContext, tokens: List[Token]): (CheckerContext, TypeResult) = {
     tokens match {
       case IdentToken(name) :: args => runFunction(context, name, args)
       case ExprToken(lst) :: args =>
@@ -34,9 +38,9 @@ object Checker extends Runner[TypeResult] {
   }
 
   private[this] def runFunction(
-      context: Context[TypeResult],
+      context: CheckerContext,
       name: String,
-      args: List[Token]): (Context[TypeResult], TypeResult) = {
+      args: List[Token]): (CheckerContext, TypeResult) = {
     context.lookup(name) match {
       case Some(func) => runFunction(context, func, args)
       case _ => (context, InvalidTypeResult(s"function not found: $name"))
@@ -44,9 +48,9 @@ object Checker extends Runner[TypeResult] {
   }
 
   private[this] def runFunction(
-      context: Context[TypeResult],
+      context: CheckerContext,
       func: TypeResult,
-      args: List[Token]): (Context[TypeResult], TypeResult) = {
+      args: List[Token]): (CheckerContext, TypeResult) = {
     func match {
       case special @ SpecialTypeResult(_) => runSpecial(context, special, args)
       case _ => (context, InvalidTypeResult("internal"))
@@ -54,9 +58,9 @@ object Checker extends Runner[TypeResult] {
   }
 
   private[this] def runSpecial(
-      context: Context[TypeResult],
+      context: CheckerContext,
       special: SpecialTypeResult,
-      args: List[Token]): (Context[TypeResult], TypeResult) = {
+      args: List[Token]): (CheckerContext, TypeResult) = {
     special.func.check(context, args)
   }
 
