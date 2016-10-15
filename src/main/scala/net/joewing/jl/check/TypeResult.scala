@@ -12,7 +12,7 @@ case class IntegerTypeResult() extends TypeResult
 case class StringTypeResult() extends TypeResult
 case class SpecialTypeResult(func: SpecialFunction) extends TypeResult
 case class LambdaTypeResult(
-    scope: Int,
+    scope: ScopeId,
     args: List[TypeResult],
     ret: TypeResult)
   extends TypeResult with LambdaResult

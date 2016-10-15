@@ -1,9 +1,9 @@
 package net.joewing.jl
 
 trait LambdaResult {
-  val scope: Int
+  val scope: ScopeId
 }
 
 object LambdaResult {
-  def unapply(lambda: LambdaResult): Option[Int] = Some(lambda.scope)
+  def unapply(lambda: LambdaResult): Option[ScopeId] = Some(lambda.scope)
 }

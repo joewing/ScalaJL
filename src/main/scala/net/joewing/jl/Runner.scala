@@ -10,9 +10,9 @@ abstract class Runner[T : BaseResult] {
 
   private val builtins = Functions.apply[T]()
 
-  private val baseScope = new Scope[T](0, -1, builtins)
+  private val baseScope = new Scope[T](new ScopeId(), builtins)
 
-  private val baseContext = new Context[T](List(), Map(0 -> baseScope), 0)
+  private val baseContext = new Context[T](List(baseScope.id), Map(baseScope.id -> baseScope))
 
   final def run(context: Context[T], tokens: List[Token]): (Context[T], T) = {
     tokens.foldLeft((context, nil)) { (acc, token) =>

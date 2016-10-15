@@ -25,7 +25,7 @@ class ExpressionParserSpec extends FlatSpec {
   }
 
   it should "parse a string" in {
-    assert(parser.parse("\"asdf\"").get == List(StringToken("\"asdf\"")))
+    assert(parser.parse("\"asdf\"").get == List(StringToken("asdf")))
   }
 
   it should "parse a simple expression" in {

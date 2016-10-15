@@ -1,54 +1,50 @@
 package net.joewing.jl
 
 class Context[T](
-    private val stack: List[Int],
-    private val scopes: Map[Int, Scope[T]],
-    val currentScope: Int) {
+    private val stack: List[ScopeId],
+    private val scopes: Map[ScopeId, Scope[T]]) {
 
-  protected def nextScopeId: Int = {
-    Range(scopes.size, -1, -1).find(i => !scopes.contains(i)).get
+  val currentScope = stack.head
+
+  private[this] def lookupStack(name: String, lst: List[ScopeId]): Option[T] = lst match {
+    case id :: tl => scopes(id).values.get(name).orElse(lookupStack(name, tl))
+    case _ =>
+      println(s"not found: $name")
+      None
   }
 
-  private def lookupStack(id: Int, name: String): Option[T] = scopes.get(id) match {
-    case Some(scope) => scope.values.get(name).orElse(lookupStack(scope.parent, name))
-    case _ => None
-  }
-
-  def lookup(name: String): Option[T] = lookupStack(currentScope, name)
+  def lookup(name: String): Option[T] = lookupStack(name, stack)
 
   def updateScope(newValues: Map[String, T]): Context[T] = {
-    val scope = scopes(currentScope).update(newValues)
-    val updatedScopes = scopes.updated(currentScope, scope)
-    new Context[T](stack, updatedScopes, currentScope)
+    val scope = scopes(stack.head).update(newValues)
+    val updatedScopes = scopes.updated(stack.head, scope)
+    new Context[T](stack, updatedScopes)
   }
 
   def valueList(names: List[String]): List[T] = names.map { lookup(_).get }
 
-  private def getReferences(scope: Scope[T]): Set[Int] = {
-    scope.values.collect { case LambdaResult(id) => id }.toSet
+  private[this] def getReferences(id: ScopeId): Set[ScopeId] = {
+    scopes(id).values.collect { case LambdaResult(i) => getReferences(i) }.flatten.toSet + id
   }
 
-  private def gc: Context[T] = {
+  private[this] def gc: Context[T] = {
     val allScopes = scopes.keySet
-    val topScopes = Set[Int](currentScope) ++ stack
-    val referencedScopes = topScopes.foldLeft(topScopes) { (scopeSet, scopeId) =>
-      scopeSet ++ getReferences(scopes(scopeId))
-    }
+    val referencedScopes = stack.foldLeft(Set[ScopeId]()) { _ ++ getReferences(_) }
     val toRemove = allScopes -- referencedScopes
     val newScopes = scopes -- toRemove
-    new Context[T](stack, newScopes, currentScope)
+    new Context[T](stack, newScopes)
   }
 
   def enterScope: Context[T] = {
-    val newScopeId = nextScopeId
-    val scope = new Scope[T](newScopeId, currentScope, Map())
-    new Context[T](stack, scopes + (newScopeId -> scope), newScopeId)
+    val newScopeId = new ScopeId()
+    val scope = new Scope[T](newScopeId, Map())
+    new Context[T](newScopeId +: stack, scopes + (newScopeId -> scope))
   }
 
-  def leaveScope: Context[T] = new Context[T](stack, scopes, scopes(currentScope).parent)
+  def leaveScope: Context[T] = new Context[T](stack.tail, scopes)
 
-  def pushScope(root: Int): Context[T] = new Context[T](currentScope +: stack, scopes, root).enterScope
+  def pushScope(root: ScopeId): Context[T] = new Context[T](root +: stack, scopes).enterScope
 
-  def popScope: Context[T] = new Context[T](stack.tail, scopes, stack.head).gc
+  def popScope: Context[T] = gc.leaveScope.leaveScope
 
 }
