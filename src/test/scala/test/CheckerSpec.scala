@@ -66,6 +66,13 @@ class CheckerSpec extends FlatSpec with Matchers {
     assert(Checker.run(program.get).isInstanceOf[InvalidTypeResult])
   }
 
+  it should "promote types" in {
+    val program = ExpressionParser.parse("(lambda (a) (if true a 0))")
+    Checker.run(program.get) should matchPattern {
+      case LambdaTypeResult(_, List(IntegerTypeResult()), IntegerTypeResult()) =>
+    }
+  }
+
   "lambda function" should "return lambda type" in {
     val program = ExpressionParser.parse("(lambda () 1)")
     Checker.run(program.get) should matchPattern {

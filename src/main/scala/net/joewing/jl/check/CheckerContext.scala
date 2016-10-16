@@ -19,6 +19,7 @@ class CheckerContext(
     case (UnknownTypeResult(id1), UnknownTypeResult(id2)) => addEquivalence(id1, id2)
     case (UnknownTypeResult(id), _) => addBound(id, b)
     case (_, UnknownTypeResult(id)) => addBound(id, a)
+    case (t1, t2) if t1 != t2 => addBound(new TypeId(), InvalidTypeResult(s"type mismatch: $t1 vs $t2"))
     case _ => this
   }
 
@@ -68,9 +69,13 @@ class CheckerContext(
     }
   }
 
-  def solve(result: TypeResult): TypeResult = result match {
-    case UnknownTypeResult(id) => solve(id)
-    case _ => result
+  def solve(result: TypeResult): TypeResult = {
+    bounds.values.foldLeft(result.solve(this)) { (acc, value) =>
+      (acc, value) match {
+        case (_, InvalidTypeResult(_)) => value
+        case _ => acc
+      }
+    }
   }
 
 }

@@ -24,7 +24,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
     }
   }
 
-  override def postprocess(context: CheckerContext, result: TypeResult): TypeResult = result.solve(context)
+  override def postprocess(context: CheckerContext, result: TypeResult): TypeResult = context.solve(result)
 
   private[this] def runExpr(context: CheckerContext, tokens: List[Token]): (CheckerContext, TypeResult) = {
     tokens match {
