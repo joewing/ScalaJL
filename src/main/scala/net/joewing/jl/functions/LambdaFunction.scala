@@ -29,7 +29,7 @@ class LambdaFunction extends SpecialFunction {
         case None => (context, InvalidTypeResult("invalid parameter list"))
         case Some(parameters) =>
           val parameterTypes = parameters.foldLeft(Map(): Map[String, TypeResult]) { (acc, name) =>
-            acc + (name -> UnknownTypeResult())
+            acc + (name -> UnknownTypeResult(new TypeId()))
           }
           val nestedContext = context.enterScope.updateScope(parameterTypes)
           val (retContext, retType) = Checker.run(nestedContext, args.tail)
@@ -45,7 +45,8 @@ class LambdaFunction extends SpecialFunction {
     getParameters(args.head) match {
       case None => (context, NilValueResult())
       case Some(parameters) =>
-        (context, LambdaValueResult(context.stack, parameters, args.tail))
+        val nestedContext = context.enterScope
+        (nestedContext.leaveScope, LambdaValueResult(nestedContext.stack, parameters, args.tail))
     }
   }
 

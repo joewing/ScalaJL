@@ -6,7 +6,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
 
   protected def createContext(
       stack: List[ScopeId],
-      scopes: Map[ScopeId, Scope[TypeResult]]): CheckerContext = new CheckerContext(stack, scopes)
+      scopes: Map[ScopeId, Scope[TypeResult]]): CheckerContext = new CheckerContext(Map(), Map(), stack, scopes)
 
   val nil: TypeResult = NilTypeResult()
 
@@ -22,6 +22,15 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       case StringToken(_) => (context, StringTypeResult())
       case ExprToken(tokens) => runExpr(context, tokens)
     }
+  }
+
+  override def run(lst: List[Token]): TypeResult = {
+    val result = lst.foldLeft((baseContext, nil): (CheckerContext, TypeResult)) { (acc, token) =>
+      val (context, _) = acc
+      run(context, token)
+    }
+    val (context, value) = result
+    value.solve(context)
   }
 
   private[this] def runExpr(context: CheckerContext, tokens: List[Token]): (CheckerContext, TypeResult) = {

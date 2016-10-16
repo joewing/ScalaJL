@@ -14,11 +14,9 @@ class InterpreterContext(
   }
 
   def pushScope(localStack: List[ScopeId]): InterpreterContext =
-    new InterpreterContext(localStack ++ stack, scopes).enterScope
+    new InterpreterContext(localStack ++ stack, scopes)
 
-  def popScope(localStack: List[ScopeId]): InterpreterContext = {
-    val toDrop = localStack.length + 1
-    new InterpreterContext(stack.drop(toDrop), scopes)
-  }
+  def popScope(localStack: List[ScopeId]): InterpreterContext =
+    new InterpreterContext(stack.drop(localStack.length), scopes)
 
 }

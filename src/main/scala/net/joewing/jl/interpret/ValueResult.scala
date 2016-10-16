@@ -17,7 +17,7 @@ case class LambdaValueResult(
     stack: List[ScopeId],
     parameters: List[String],
     tokens: List[Token])
-  extends ValueResult with LambdaResult {
+  extends ValueResult with HasScopeStack {
 
   override def toString = "<lambda>"
 }

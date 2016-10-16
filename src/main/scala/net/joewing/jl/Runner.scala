@@ -14,7 +14,7 @@ abstract class Runner[T : BaseResult, C <: Context[T, C]] {
 
   private val baseScope: Scope[T] = new Scope[T](new ScopeId(), builtins)
 
-  private val baseContext: C = createContext(List(baseScope.id), Map(baseScope.id -> baseScope))
+  protected val baseContext: C = createContext(List(baseScope.id), Map(baseScope.id -> baseScope))
 
   final def run(context: C, tokens: List[Token]): (C, T) = {
     tokens.foldLeft((context, nil)) { (acc, token) =>
@@ -23,7 +23,7 @@ abstract class Runner[T : BaseResult, C <: Context[T, C]] {
     }
   }
 
-  final def run(lst: List[Token]): T = {
+  def run(lst: List[Token]): T = {
     val result = lst.foldLeft((baseContext, nil): (C, T)) { (acc, token) =>
       val (context, _) = acc
       run(context, token)

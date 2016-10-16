@@ -76,7 +76,7 @@ class CheckerSpec extends FlatSpec with Matchers {
   it should "handle unknown types" in {
     val program = ExpressionParser.parse("(lambda (a) a)")
     Checker.run(program.get) should matchPattern {
-      case LambdaTypeResult(_, List(UnknownTypeResult()), UnknownTypeResult()) =>
+      case LambdaTypeResult(_, List(UnknownTypeResult(_)), UnknownTypeResult(_)) =>
     }
   }
 

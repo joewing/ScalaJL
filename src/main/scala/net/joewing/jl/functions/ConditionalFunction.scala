@@ -18,11 +18,15 @@ abstract class ConditionalFunction extends SpecialFunction {
         case (InvalidTypeResult(_), _) => (rightContext, leftValue)
         case (_, InvalidTypeResult(_)) => (rightContext, rightValue)
         case (IntegerTypeResult(), IntegerTypeResult()) => (rightContext, BooleanTypeResult())
-        case (IntegerTypeResult(), UnknownTypeResult()) => (rightContext, BooleanTypeResult())
-        case (UnknownTypeResult(), IntegerTypeResult()) => (rightContext, BooleanTypeResult())
+        case (IntegerTypeResult(), UnknownTypeResult(b)) =>
+          (rightContext.addBound(b, IntegerTypeResult()), BooleanTypeResult())
+        case (UnknownTypeResult(a), IntegerTypeResult()) =>
+          (rightContext.addBound(a, IntegerTypeResult()), BooleanTypeResult())
         case (StringTypeResult(), StringTypeResult()) => (rightContext, BooleanTypeResult())
-        case (StringTypeResult(), UnknownTypeResult()) => (rightContext, BooleanTypeResult())
-        case (UnknownTypeResult(), StringTypeResult()) => (rightContext, BooleanTypeResult())
+        case (StringTypeResult(), UnknownTypeResult(b)) =>
+          (rightContext.addBound(b, StringTypeResult()), BooleanTypeResult())
+        case (UnknownTypeResult(a), StringTypeResult()) =>
+          (rightContext.addBound(a, StringTypeResult()), BooleanTypeResult())
         case _ => (rightContext, InvalidTypeResult("wrong types to conditional"))
       }
     }
