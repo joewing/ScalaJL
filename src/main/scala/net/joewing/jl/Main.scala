@@ -1,5 +1,6 @@
 package net.joewing.jl
 
+import net.joewing.jl.check.{Checker, InvalidTypeResult}
 import net.joewing.jl.interpret.Interpreter
 import net.joewing.jl.parse.ExpressionParser
 
@@ -9,6 +10,10 @@ object Main {
             println("usage: jli <filename>")
             return
         }
-        Interpreter.run(ExpressionParser.parseFile(args(0)).get)
+        val program = ExpressionParser.parseFile(args(0)).get
+        Checker.run(program) match {
+          case InvalidTypeResult(msg) => println(s"TYPE ERROR: $msg")
+          case _ => Interpreter.run(program)
+        }
     }
 }

@@ -24,7 +24,12 @@ object Checker extends Runner[TypeResult, CheckerContext] {
     }
   }
 
-  override def postprocess(context: CheckerContext, result: TypeResult): TypeResult = context.solve(result)
+  override def postprocess(context: CheckerContext, result: TypeResult): TypeResult = {
+    context.solve(result) match {
+      case UnknownTypeResult(_) => InvalidTypeResult("could not resolve type")
+      case other => other
+    }
+  }
 
   private[this] def runExpr(context: CheckerContext, tokens: List[Token]): (CheckerContext, TypeResult) = {
     tokens match {
@@ -55,8 +60,44 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       args: List[Token]): (CheckerContext, TypeResult) = {
     func match {
       case special @ SpecialTypeResult(_) => runSpecial(context, special, args)
-      case _ => (context, InvalidTypeResult("internal"))
+      case lambda @ LambdaTypeResult(_, _, _) => runLambda(context, lambda, args)
+      case unknown @ UnknownTypeResult(id) => runUnknown(context, unknown, args)
+      case _ => (context, InvalidTypeResult(s"not a function: $func"))
     }
+  }
+
+  private[this] def getParameterTypes(
+      context: CheckerContext,
+      args: List[Token]): (CheckerContext, List[TypeResult]) = {
+    val zero = (context, List[TypeResult]())
+    args.foldLeft(zero) { (acc, token) =>
+      val (oldContext, oldList) = acc
+      val (newContext, newType) = run(oldContext, token)
+      (newContext, oldList :+ newType)
+    }
+  }
+
+  private[this] def runUnknown(
+      context: CheckerContext,
+      unknown: UnknownTypeResult,
+      args: List[Token]): (CheckerContext, TypeResult) = {
+    val (paramContext, paramTypes) = getParameterTypes(context, args)
+    val retType = UnknownTypeResult(new TypeId())
+    val lambdaType = LambdaTypeResult(List(), paramTypes, retType)
+    val boundedContext = paramContext.addBound(unknown.id, lambdaType)
+    (boundedContext, retType)
+  }
+
+  private[this] def runLambda(
+      context: CheckerContext,
+      lambda: LambdaTypeResult,
+      args: List[Token]): (CheckerContext, TypeResult) = {
+    val (paramContext, paramTypes) = getParameterTypes(context, args)
+    val equivContext = lambda.args.zip(paramTypes).foldLeft(paramContext) { (context, types) =>
+      val (actual, expected) = types
+      context.addEquivalence(actual, expected)
+    }
+    (equivContext, lambda.ret)
   }
 
   private[this] def runSpecial(

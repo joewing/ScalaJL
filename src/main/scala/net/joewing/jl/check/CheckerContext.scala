@@ -15,10 +15,22 @@ class CheckerContext(
     new CheckerContext(equivalences, bounds, stack, scopes)
   }
 
+  private[this] def addLambdaEquivalence(a: LambdaTypeResult, b: LambdaTypeResult): CheckerContext = {
+    if (a.args.length != b.args.length) {
+      addBound(new TypeId(), InvalidTypeResult(s"wrong number of arguments"))
+    } else {
+      (a.args :+ a.ret).zip(b.args :+ b.ret).foldLeft(this) { (context, types) =>
+        val (a, b) = types
+        context.addEquivalence(a, b)
+      }
+    }
+  }
+
   def addEquivalence(a: TypeResult, b: TypeResult): CheckerContext = (a, b) match {
     case (UnknownTypeResult(id1), UnknownTypeResult(id2)) => addEquivalence(id1, id2)
     case (UnknownTypeResult(id), _) => addBound(id, b)
     case (_, UnknownTypeResult(id)) => addBound(id, a)
+    case (t1 @ LambdaTypeResult(_, _, _), t2 @ LambdaTypeResult(_, _, _)) => addLambdaEquivalence(t1, t2)
     case (t1, t2) if t1 != t2 => addBound(new TypeId(), InvalidTypeResult(s"type mismatch: $t1 vs $t2"))
     case _ => this
   }
@@ -29,20 +41,8 @@ class CheckerContext(
 
   def addBound(id: TypeId, bound: TypeResult): CheckerContext = bound match {
     case UnknownTypeResult(otherId) => addEquivalence(id, otherId)
-    case _ if bounds.contains(id) =>
-      val oldBound = bounds(id)
-      val (newBound, newEquivalences) = (oldBound, bound) match {
-        case (UnknownTypeResult(a), UnknownTypeResult(b)) => (oldBound, equivalences + (a -> b) + (b -> a))
-        case (UnknownTypeResult(_), _) => (bound, equivalences)
-        case (_, UnknownTypeResult(_)) => (oldBound, equivalences)
-        case (a, b) if a == b => (oldBound, equivalences)
-        case _ => (InvalidTypeResult(s"type mismatch: $oldBound vs $bound"), equivalences)
-      }
-      val newBounds = bounds + (id -> newBound)
-      new CheckerContext(newEquivalences, newBounds, stack, scopes)
-    case _ =>
-      val newBounds = bounds + (id -> bound)
-      new CheckerContext(equivalences, newBounds, stack, scopes)
+    case _ if bounds.contains(id) => addEquivalence(bounds(id), bound)
+    case _ => new CheckerContext(equivalences, bounds + (id -> bound), stack, scopes)
   }
 
   private[this] def allEquivalences(id: TypeId, visited: Set[TypeId] = Set()): Set[TypeId] = {

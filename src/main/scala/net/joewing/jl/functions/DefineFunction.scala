@@ -10,8 +10,10 @@ class DefineFunction extends SpecialFunction {
   def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) =
     args match {
       case IdentToken(name) :: rest =>
-        val (resultContext, resultType) = Checker.run(context, rest)
-        val newContext = resultContext.updateScope(Map(name -> resultType))
+        val tempType = UnknownTypeResult(new TypeId())
+        val tempContext = context.updateScope(Map(name -> tempType))
+        val (resultContext, resultType) = Checker.run(tempContext, rest)
+        val newContext = resultContext.addEquivalence(tempType, resultType)
         (newContext, resultType)
       case _ =>
         (context, InvalidTypeResult("invalid arguments to define"))
