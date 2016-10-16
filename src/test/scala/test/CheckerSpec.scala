@@ -107,4 +107,11 @@ class CheckerSpec extends FlatSpec with Matchers {
     assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
   }
 
+  "list function" should "create lists" in {
+    val program = getProgram("(list 1 2 3)")
+    Checker.run(program) should matchPattern {
+      case ListTypeResult(IntegerTypeResult()) =>
+    }
+  }
+
 }
