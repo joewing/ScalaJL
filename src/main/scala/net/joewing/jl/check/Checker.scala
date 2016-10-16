@@ -24,14 +24,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
     }
   }
 
-  override def run(lst: List[Token]): TypeResult = {
-    val result = lst.foldLeft((baseContext, nil): (CheckerContext, TypeResult)) { (acc, token) =>
-      val (context, _) = acc
-      run(context, token)
-    }
-    val (context, value) = result
-    value.solve(context)
-  }
+  override def postprocess(context: CheckerContext, result: TypeResult): TypeResult = result.solve(context)
 
   private[this] def runExpr(context: CheckerContext, tokens: List[Token]): (CheckerContext, TypeResult) = {
     tokens match {
