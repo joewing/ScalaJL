@@ -72,28 +72,28 @@ class CheckerSpec extends FlatSpec with Matchers {
   it should "promote types" in {
     val program = getProgram("(lambda (a) (if true a 0))")
     Checker.run(program) should matchPattern {
-      case LambdaTypeResult(_, List(IntegerTypeResult()), IntegerTypeResult()) =>
+      case LambdaTypeResult(List(IntegerTypeResult()), IntegerTypeResult()) =>
     }
   }
 
   "lambda function" should "return lambda type" in {
     val program = getProgram("(lambda () 1)")
     Checker.run(program) should matchPattern {
-      case LambdaTypeResult(_, List(), IntegerTypeResult()) =>
+      case LambdaTypeResult(List(), IntegerTypeResult()) =>
     }
   }
 
   it should "handle unknown types" in {
     val program = getProgram("(lambda (a) a)")
     Checker.run(program) should matchPattern {
-      case LambdaTypeResult(_, List(UnknownTypeResult(_)), UnknownTypeResult(_)) =>
+      case LambdaTypeResult(List(UnknownTypeResult(_)), UnknownTypeResult(_)) =>
     }
   }
 
   it should "promote types" in {
     val program = getProgram("(lambda (a) (add a 1))")
     Checker.run(program) should matchPattern {
-      case LambdaTypeResult(_, List(IntegerTypeResult()), IntegerTypeResult()) =>
+      case LambdaTypeResult(List(IntegerTypeResult()), IntegerTypeResult()) =>
     }
   }
 

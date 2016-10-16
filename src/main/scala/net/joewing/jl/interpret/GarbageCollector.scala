@@ -1,12 +1,12 @@
 package net.joewing.jl.interpret
 
-import net.joewing.jl.{HasScopeStack, Scope, ScopeId}
+import net.joewing.jl.{Scope, ScopeId}
 
 private class GarbageCollector(private[this] val scopes: Map[ScopeId, Scope[ValueResult]]) {
 
   private[this] def getReferences(id: ScopeId, visited: Set[ScopeId]): Set[ScopeId] = {
     if (!visited.contains(id)) {
-      val newScopes = scopes(id).values.values.collect { case HasScopeStack(stack) => stack }.flatten.toSet
+      val newScopes = scopes(id).values.values.collect { case LambdaValueResult(stack, _, _) => stack }.flatten.toSet
       newScopes.foldLeft(visited + id) { (scopeSet, newId) => getReferences(newId, scopeSet) }
     } else {
       visited

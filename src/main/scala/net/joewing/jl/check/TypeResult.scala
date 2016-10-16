@@ -17,12 +17,8 @@ case class BooleanTypeResult() extends TypeResult
 case class IntegerTypeResult() extends TypeResult
 case class StringTypeResult() extends TypeResult
 case class SpecialTypeResult(func: SpecialFunction) extends TypeResult
-case class LambdaTypeResult(
-    stack: List[ScopeId],
-    args: List[TypeResult],
-    ret: TypeResult)
-  extends TypeResult with HasScopeStack {
+case class LambdaTypeResult(args: List[TypeResult], ret: TypeResult) extends TypeResult {
   override def solve(context: CheckerContext): TypeResult = {
-    LambdaTypeResult(stack, args.map(_.solve(context)), ret.solve(context))
+    LambdaTypeResult(args.map(_.solve(context)), ret.solve(context))
   }
 }

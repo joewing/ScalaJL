@@ -60,7 +60,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       args: List[Token]): (CheckerContext, TypeResult) = {
     func match {
       case special @ SpecialTypeResult(_) => runSpecial(context, special, args)
-      case lambda @ LambdaTypeResult(_, _, _) => runLambda(context, lambda, args)
+      case lambda @ LambdaTypeResult(_, _) => runLambda(context, lambda, args)
       case unknown @ UnknownTypeResult(id) => runUnknown(context, unknown, args)
       case _ => (context, InvalidTypeResult(s"not a function: $func"))
     }
@@ -83,7 +83,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       args: List[Token]): (CheckerContext, TypeResult) = {
     val (paramContext, paramTypes) = getParameterTypes(context, args)
     val retType = UnknownTypeResult(new TypeId())
-    val lambdaType = LambdaTypeResult(List(), paramTypes, retType)
+    val lambdaType = LambdaTypeResult(paramTypes, retType)
     val boundedContext = paramContext.addBound(unknown.id, lambdaType)
     (boundedContext, retType)
   }
