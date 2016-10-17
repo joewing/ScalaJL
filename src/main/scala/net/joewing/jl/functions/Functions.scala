@@ -13,6 +13,7 @@ object Functions {
       "lt"      -> wrap(new LTFunction),
       "add"     -> wrap(new AddFunction),
       "define"  -> wrap(new DefineFunction),
+      "head"    -> wrap(new HeadFunction),
       "if"      -> wrap(new IfFunction),
       "lambda"  -> wrap(new LambdaFunction),
       "list"    -> wrap(new ListFunction),

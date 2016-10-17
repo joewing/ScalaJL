@@ -114,4 +114,9 @@ class CheckerSpec extends FlatSpec with Matchers {
     }
   }
 
+  "head function" should "return the right type" in {
+    val program = getProgram("(head (list 1 2) 3)")
+    assert(Checker.run(program).isInstanceOf[IntegerTypeResult])
+  }
+
 }

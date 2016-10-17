@@ -76,4 +76,14 @@ class InterpreterSpec extends FlatSpec {
     assert(Interpreter.run(program) == ListValueResult(List(IntegerValueResult(1), IntegerValueResult(2))))
   }
 
+  "head function" should "return the first element" in {
+    val program = getProgram("(head (list 1 2 3) 4)")
+    assert(Interpreter.run(program) == IntegerValueResult(1))
+  }
+
+  "head function" should "handle empty lists" in {
+    val program = getProgram("(head (list) 1)")
+    assert(Interpreter.run(program) == IntegerValueResult(1))
+  }
+
 }
