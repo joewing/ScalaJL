@@ -31,6 +31,7 @@ class CheckerContext(
     case (UnknownTypeResult(id), _) => addBound(id, b)
     case (_, UnknownTypeResult(id)) => addBound(id, a)
     case (t1 @ LambdaTypeResult(_, _), t2 @ LambdaTypeResult(_, _)) => addLambdaEquivalence(t1, t2)
+    case (ListTypeResult(t1), ListTypeResult(t2)) => addEquivalence(t1, t2)
     case (t1, t2) if t1 != t2 => addBound(new TypeId(), InvalidTypeResult(s"type mismatch: $t1 vs $t2"))
     case _ => this
   }

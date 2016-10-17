@@ -17,6 +17,7 @@ object Functions {
       "if"      -> wrap(new IfFunction),
       "lambda"  -> wrap(new LambdaFunction),
       "list"    -> wrap(new ListFunction),
-      "print"   -> wrap(new PrintFunction)
+      "print"   -> wrap(new PrintFunction),
+      "tail"    -> wrap(new TailFunction)
     )
 }

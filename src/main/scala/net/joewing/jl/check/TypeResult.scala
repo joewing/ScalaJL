@@ -28,8 +28,3 @@ case class ListTypeResult(contained: TypeResult) extends TypeResult {
     ListTypeResult(contained.solve(context))
   }
 }
-case class OptionTypeResult(contained: TypeResult) extends TypeResult {
-  override def solve(context: CheckerContext): TypeResult = {
-    OptionTypeResult(contained.solve(context))
-  }
-}

@@ -37,10 +37,3 @@ case class StringValueResult(value: String) extends ValueResult {
 case class ListValueResult(values: List[ValueResult]) extends ValueResult {
   override def toString = values.mkString("[", ",", "]")
 }
-
-case class OptionValueResult(value: Option[ValueResult]) extends ValueResult {
-  override def toString = value match {
-    case Some(x) => s"Some($x)"
-    case None => "None"
-  }
-}

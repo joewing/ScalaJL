@@ -119,4 +119,11 @@ class CheckerSpec extends FlatSpec with Matchers {
     assert(Checker.run(program).isInstanceOf[IntegerTypeResult])
   }
 
+  "tail function" should "return a list" in {
+    val program = getProgram("(tail (list 1 2))")
+    Checker.run(program) should matchPattern {
+      case ListTypeResult(IntegerTypeResult()) =>
+    }
+  }
+
 }
