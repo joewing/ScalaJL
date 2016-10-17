@@ -6,7 +6,7 @@ import org.scalatest.FlatSpec
 
 class ExpressionParserSpec extends FlatSpec {
 
-  val parser = ExpressionParser
+  val parser = new ExpressionParser("test")
 
   "The parser" should "parse a number" in {
     assert(parser.parse("53").get == List(IntegerToken(53)))

@@ -15,30 +15,38 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       case IdentToken(ident) =>
         context.lookup(ident) match {
           case Some(result) => (context, result)
-          case None => (context, InvalidTypeResult(s"not found: $ident"))
+          case None =>
+            val (file, line) = (token.file, token.line)
+            val msg = s"$file[$line]: not found: $ident"
+            println(msg)
+            (context, InvalidTypeResult(msg))
         }
       case BooleanToken(_) => (context, BooleanTypeResult())
       case IntegerToken(_) => (context, IntegerTypeResult())
       case StringToken(_) => (context, StringTypeResult())
-      case ExprToken(tokens) => runExpr(context, tokens)
+      case ExprToken(tokens) => runExpr(context, token, tokens)
     }
   }
 
   override def postprocess(context: CheckerContext, result: TypeResult): TypeResult = {
     context.solve(result) match {
-      case UnknownTypeResult(_) => InvalidTypeResult("could not resolve type")
+      case UnknownTypeResult(_) => InvalidTypeResult(s"could not resolve type of $result")
       case other => other
     }
   }
 
-  private[this] def runExpr(context: CheckerContext, tokens: List[Token]): (CheckerContext, TypeResult) = {
+  private[this] def runExpr(
+      context: CheckerContext,
+      token: Token,
+      tokens: List[Token]): (CheckerContext, TypeResult) = {
     tokens match {
-      case IdentToken(name) :: args => runFunction(context, name, args)
-      case ExprToken(lst) :: args =>
-        val (newContext, func) = runExpr(context, lst)
-        runFunction(newContext, func, args)
+      case IdentToken(name) :: args => runFunction(context, token, name, args)
+      case (exprToken @ ExprToken(lst)) :: args =>
+        val (newContext, func) = runExpr(context, exprToken, lst)
+        runFunction(newContext, exprToken, func, args)
       case _ =>
-        val msg = s"invalid expression: $tokens"
+        val (file, line) = (token.file, token.line)
+        val msg = s"$file[$line]: invalid expression: $tokens"
         println(msg)
         (context, InvalidTypeResult(msg))
     }
@@ -46,23 +54,33 @@ object Checker extends Runner[TypeResult, CheckerContext] {
 
   private[this] def runFunction(
       context: CheckerContext,
+      token: Token,
       name: String,
       args: List[Token]): (CheckerContext, TypeResult) = {
     context.lookup(name) match {
-      case Some(func) => runFunction(context, func, args)
-      case _ => (context, InvalidTypeResult(s"function not found: $name"))
+      case Some(func) => runFunction(context, token, func, args)
+      case None =>
+        val (file, line) = (token.file, token.line)
+        val msg = s"$file[$line]: function not found: $name"
+        println(msg)
+        (context, InvalidTypeResult(msg))
     }
   }
 
   private[this] def runFunction(
       context: CheckerContext,
+      token: Token,
       func: TypeResult,
       args: List[Token]): (CheckerContext, TypeResult) = {
     func match {
-      case special @ SpecialTypeResult(_) => runSpecial(context, special, args)
-      case lambda @ LambdaTypeResult(_, _) => runLambda(context, lambda, args)
-      case unknown @ UnknownTypeResult(id) => runUnknown(context, unknown, args)
-      case _ => (context, InvalidTypeResult(s"not a function: $func"))
+      case special @ SpecialTypeResult(_) => runSpecial(context, token, special, args)
+      case lambda @ LambdaTypeResult(_, _) => runLambda(context, token, lambda, args)
+      case unknown @ UnknownTypeResult(id) => runUnknown(context, token, unknown, args)
+      case _ =>
+        val (file, line) = (token.file, token.line)
+        val msg = s"$file[$line]: not a function: $func"
+        println(msg)
+        (context, InvalidTypeResult(msg))
     }
   }
 
@@ -79,6 +97,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
 
   private[this] def runUnknown(
       context: CheckerContext,
+      token: Token,
       unknown: UnknownTypeResult,
       args: List[Token]): (CheckerContext, TypeResult) = {
     val (paramContext, paramTypes) = getParameterTypes(context, args)
@@ -90,6 +109,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
 
   private[this] def runLambda(
       context: CheckerContext,
+      token: Token,
       lambda: LambdaTypeResult,
       args: List[Token]): (CheckerContext, TypeResult) = {
     val (paramContext, paramTypes) = getParameterTypes(context, args)
@@ -102,6 +122,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
 
   private[this] def runSpecial(
       context: CheckerContext,
+      token: Token,
       special: SpecialTypeResult,
       args: List[Token]): (CheckerContext, TypeResult) = {
     special.func.check(context, args)

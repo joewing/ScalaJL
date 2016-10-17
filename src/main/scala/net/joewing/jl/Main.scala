@@ -10,7 +10,7 @@ object Main {
             println("usage: jli <filename>")
             return
         }
-        val program = ExpressionParser.parseFile(args(0)).get
+        val program = new ExpressionParser(args(0)).parseFile.get
         Checker.run(program) match {
           case InvalidTypeResult(msg) => println(s"TYPE ERROR: $msg")
           case _ => Interpreter.run(program)

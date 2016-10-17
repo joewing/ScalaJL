@@ -7,7 +7,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class CheckerSpec extends FlatSpec with Matchers {
 
-  private[this] def getProgram(code: String): List[Token] = ExpressionParser.parse(code).get
+  private[this] def getProgram(code: String): List[Token] = new ExpressionParser("test").parse(code).get
 
   "integer literals" should "be integers" in {
     val program = getProgram("1")

@@ -17,9 +17,9 @@ object Interpreter extends Runner[ValueResult, InterpreterContext] {
       args: List[Token]): (InterpreterContext, ValueResult) = {
     val actuals = args.map { run(context, _)._2 }
     val newValues = Map(lambda.parameters.zip(actuals): _*)
-    val nestedContext = context.pushScope(lambda.stack).updateScope(newValues)
+    val nestedContext = context.pushScope(lambda.stack).enterScope.updateScope(newValues)
     val (retContext, retValue) = run(nestedContext, lambda.tokens)
-    (retContext.popScope(lambda.stack), retValue)
+    (retContext.leaveScope.popScope(lambda.stack), retValue)
   }
 
   private[this] def runFunction(

@@ -8,7 +8,7 @@ import org.scalatest.FlatSpec
 class InterpreterSpec extends FlatSpec {
 
   private[this] def getProgram(code: String): List[Token] = {
-    ExpressionParser.parse(code).get
+    new ExpressionParser("test").parse(code).get
   }
 
   "print function" should "return nil" in {
@@ -69,6 +69,15 @@ class InterpreterSpec extends FlatSpec {
   it should "handle closures" in {
     val program = getProgram("(define f (lambda (a) (lambda (b) (add a b)))) ((f 1) 2)")
     assert(Interpreter.run(program) == IntegerValueResult(3))
+  }
+
+  it should "handle nested functions" in {
+    val program = getProgram(
+      "(define f (lambda (i) (add i 1)))" +
+      "(define s (lambda (i f) (if (lt i 5) (add (s (add i 1) f) (f i)) 0)))" +
+      "(s 0 f)"
+    )
+    assert(Interpreter.run(program) == IntegerValueResult(15))
   }
 
   "list function" should "create lists" in {

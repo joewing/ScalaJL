@@ -8,9 +8,7 @@ abstract class Context[T, C <: Context[T, C]](
 
   private[this] def lookupStack(name: String, lst: List[ScopeId]): Option[T] = lst match {
     case id :: tl => scopes(id).values.get(name).orElse(lookupStack(name, tl))
-    case _ =>
-      println(s"not found: $name")
-      None
+    case _ => None
   }
 
   def lookup(name: String): Option[T] = lookupStack(name, stack)
