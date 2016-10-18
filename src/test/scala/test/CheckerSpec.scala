@@ -104,7 +104,7 @@ class CheckerSpec extends FlatSpec with Matchers {
 
   it should "handle calls" in {
     val program = getProgram("(define f (lambda (a) (if a 1 2)))(f true)")
-    assert(Checker.run(program).isInstanceOf[IntegerTypeResult])
+    assert(Checker.run(program) == IntegerTypeResult())
   }
 
   it should "handle incorrect calls" in {
@@ -121,7 +121,7 @@ class CheckerSpec extends FlatSpec with Matchers {
 
   "head function" should "return the right type" in {
     val program = getProgram("(head (list 1 2) 3)")
-    assert(Checker.run(program).isInstanceOf[IntegerTypeResult])
+    assert(Checker.run(program) == IntegerTypeResult())
   }
 
   "tail function" should "return a list" in {
@@ -129,6 +129,16 @@ class CheckerSpec extends FlatSpec with Matchers {
     Checker.run(program) should matchPattern {
       case ListTypeResult(IntegerTypeResult()) =>
     }
+  }
+
+  "empty? function" should "return a boolean" in {
+    val program = getProgram("(empty? (list))")
+    assert(Checker.run(program) == BooleanTypeResult())
+  }
+
+  it should "handle type errors" in {
+    val program = getProgram("(empty? 3)")
+    assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
   }
 
 }
