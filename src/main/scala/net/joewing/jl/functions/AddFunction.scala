@@ -2,6 +2,7 @@ package net.joewing.jl.functions
 
 import net.joewing.jl._
 import net.joewing.jl.check._
+import net.joewing.jl.il.Program
 import net.joewing.jl.interpret._
 
 class AddFunction extends SpecialFunction {
@@ -33,4 +34,6 @@ class AddFunction extends SpecialFunction {
       }
     }
   }
+
+  def generate(args: List[Token]): Program = ???
 }

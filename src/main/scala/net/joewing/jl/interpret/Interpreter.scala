@@ -65,11 +65,7 @@ object Interpreter extends Runner[ValueResult, InterpreterContext] {
 
   def run(context: InterpreterContext, token: Token): (InterpreterContext, ValueResult) = {
     token match {
-      case IdentToken(ident) =>
-        context.lookup(ident) match {
-          case Some(value) => (context, value)
-          case None => (context, NilValueResult())
-        }
+      case IdentToken(ident) => (context, context.lookup(ident).get)
       case BooleanToken(value) => (context, BooleanValueResult(value))
       case IntegerToken(value) => (context, IntegerValueResult(value))
       case StringToken(value) => (context, StringValueResult(value))
