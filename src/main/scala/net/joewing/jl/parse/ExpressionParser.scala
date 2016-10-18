@@ -10,7 +10,7 @@ class ExpressionParser(val filename: String) extends JavaTokenParsers {
 
   private def string = stringLiteral ^^ { s => StringToken(StringParser.parse(s).get).setFile(filename) }
 
-  private def identifier: Parser[Token] = """[^\(\)" ]+""".r ^^ {
+  private def identifier: Parser[Token] = """[^\(\)" \n\r\t]+""".r ^^ {
     case "true" => BooleanToken(true).setFile(filename)
     case "false" => BooleanToken(false).setFile(filename)
     case s => IdentToken(s).setFile(filename)

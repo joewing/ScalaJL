@@ -12,6 +12,14 @@ class ExpressionParserSpec extends FlatSpec {
     assert(parser.parse("53").get == List(IntegerToken(53)))
   }
 
+  it should "handle newlines" in {
+    assert(parser.parse("asdf\n").get == List(IdentToken("asdf")))
+  }
+
+  it should "parse negative numbers" in {
+    assert(parser.parse("-5").get == List(IntegerToken(-5)))
+  }
+
   it should "parse an identifier" in {
     assert(parser.parse("asdf").get == List(IdentToken("asdf")))
   }
@@ -28,6 +36,16 @@ class ExpressionParserSpec extends FlatSpec {
     assert(parser.parse("\"asdf\"").get == List(StringToken("asdf")))
   }
 
+  it should "parse symbols" in {
+    assert(parser.parse("< > <= ? !").get == List(
+      IdentToken("<"),
+      IdentToken(">"),
+      IdentToken("<="),
+      IdentToken("?"),
+      IdentToken("!")
+    ))
+  }
+
   it should "parse a simple expression" in {
     assert(parser.parse("(1 2)").get ==
       List(
@@ -42,14 +60,14 @@ class ExpressionParserSpec extends FlatSpec {
   }
 
   it should "parse nested expressions" in {
-    assert(parser.parse("(add (mult 3 four) 2)").get ==
+    assert(parser.parse("(+ (* 3 four) 2)").get ==
       List(
         ExprToken(
           List(
-            IdentToken("add"),
+            IdentToken("+"),
             ExprToken(
               List(
-                IdentToken("mult"),
+                IdentToken("*"),
                 IntegerToken(3),
                 IdentToken("four")
               )

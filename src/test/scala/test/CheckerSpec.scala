@@ -39,6 +39,11 @@ class CheckerSpec extends FlatSpec with Matchers {
     assert(Checker.run(program) == IntegerTypeResult())
   }
 
+  it should "handle recursion" in {
+    val program = getProgram("(define f (lambda (i) (if (< i 5) (+ i (f (+ i 1))) 0)))(f 0)")
+    assert(Checker.run(program) == IntegerTypeResult())
+  }
+
   "add function" should "return integers" in {
     val program = getProgram("(+ 2 1)")
     assert(Checker.run(program) == IntegerTypeResult())
