@@ -40,17 +40,17 @@ class CheckerSpec extends FlatSpec with Matchers {
   }
 
   "add function" should "return integers" in {
-    val program = getProgram("(add 2 1)")
+    val program = getProgram("(+ 2 1)")
     assert(Checker.run(program) == IntegerTypeResult())
   }
 
   it should "handle type errors" in {
-    val program = getProgram("(add 2 \"asdf\")")
+    val program = getProgram("(+ 2 \"asdf\")")
     assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
   }
 
   it should "handle undefined values" in {
-    val program = getProgram("(add 2 a)")
+    val program = getProgram("(+ 2 a)")
     assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
   }
 
@@ -91,7 +91,7 @@ class CheckerSpec extends FlatSpec with Matchers {
   }
 
   it should "promote types" in {
-    val program = getProgram("(lambda (a) (add a 1))")
+    val program = getProgram("(lambda (a) (+ a 1))")
     Checker.run(program) should matchPattern {
       case LambdaTypeResult(List(IntegerTypeResult()), IntegerTypeResult()) =>
     }

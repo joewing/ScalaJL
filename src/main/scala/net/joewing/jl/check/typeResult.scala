@@ -13,7 +13,6 @@ case class UnknownTypeResult(id: TypeId) extends TypeResult {
   override def solve(context: CheckerContext): TypeResult = context.solve(id)
 }
 case class NilTypeResult() extends TypeResult
-case class AnyTypeResult() extends TypeResult
 case class BooleanTypeResult() extends TypeResult
 case class IntegerTypeResult() extends TypeResult
 case class StringTypeResult() extends TypeResult

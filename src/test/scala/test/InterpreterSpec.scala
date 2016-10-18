@@ -27,12 +27,12 @@ class InterpreterSpec extends FlatSpec {
   }
 
   "add function" should "return 0" in {
-    val program = getProgram("(add)")
+    val program = getProgram("(+)")
     assert(Interpreter.run(program) == IntegerValueResult(0))
   }
 
   it should "add integers" in {
-    val program = getProgram("(add 1 2 3)")
+    val program = getProgram("(+ 1 2 3)")
     assert(Interpreter.run(program) == IntegerValueResult(6))
   }
 
@@ -52,29 +52,29 @@ class InterpreterSpec extends FlatSpec {
   }
 
   it should "handle parameters" in {
-    val program = getProgram("(define f (lambda (a) (add a a)))(f 3)")
+    val program = getProgram("(define f (lambda (a) (+ a a)))(f 3)")
     assert(Interpreter.run(program) == IntegerValueResult(6))
   }
 
   it should "handle recursion" in {
-    val program = getProgram("(define f (lambda (i) (if (lt i 5) (add i (f (add i 1))) 0)))(f 0)")
+    val program = getProgram("(define f (lambda (i) (if (< i 5) (+ i (f (+ i 1))) 0)))(f 0)")
     assert(Interpreter.run(program) == IntegerValueResult(10))
   }
 
   it should "use lexical scoping" in {
-    val program = getProgram("(define a 3)(define b 6)(define f (lambda (b) (add a b)))(f 1)")
+    val program = getProgram("(define a 3)(define b 6)(define f (lambda (b) (+ a b)))(f 1)")
     assert(Interpreter.run(program) == IntegerValueResult(4))
   }
 
   it should "handle closures" in {
-    val program = getProgram("(define f (lambda (a) (lambda (b) (add a b)))) ((f 1) 2)")
+    val program = getProgram("(define f (lambda (a) (lambda (b) (+ a b)))) ((f 1) 2)")
     assert(Interpreter.run(program) == IntegerValueResult(3))
   }
 
   it should "handle nested functions" in {
     val program = getProgram(
-      "(define f (lambda (i) (add i 1)))" +
-      "(define s (lambda (i f) (if (lt i 5) (add (s (add i 1) f) (f i)) 0)))" +
+      "(define f (lambda (i) (+ i 1)))" +
+      "(define s (lambda (i f) (if (< i 5) (+ (s (+ i 1) f) (f i)) 0)))" +
       "(s 0 f)"
     )
     assert(Interpreter.run(program) == IntegerValueResult(15))
