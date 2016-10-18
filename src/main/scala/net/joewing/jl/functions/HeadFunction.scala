@@ -5,18 +5,18 @@ import net.joewing.jl.check._
 import net.joewing.jl.interpret._
 
 class HeadFunction extends SpecialFunction {
-  override def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
+  def check(context: CheckerContext, expr: Token, args: List[Token]): (CheckerContext, TypeResult) = {
     args match {
       case first :: second :: Nil =>
         val (listContext, listType) = Checker.run(context, first)
         val (argContext, containedType) = Checker.run(listContext, second)
-        val expectedListType = ListTypeResult(containedType)
+        val expectedListType = ListTypeResult(second, containedType)
         (argContext.addEquivalence(listType, expectedListType), containedType)
-      case _ => (context, InvalidTypeResult("wrong number of arguments to head"))
+      case _ => (context, InvalidTypeResult(expr, s"wrong number of arguments to head; got ${args.length}, expected 2"))
     }
   }
 
-  override def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
+  def run(context: InterpreterContext, expr: Token, args: List[Token]): (InterpreterContext, ValueResult) = {
     assert(args.length == 2)
     val (newContext, listValue) = Interpreter.run(context, args.head)
     listValue match {

@@ -16,6 +16,10 @@ trait LiteralToken[T] {
   self: Token =>
   val values: List[Token] = List(this)
 }
+case class InvalidToken() extends Token {
+  val values = List[Token]()
+  override def toString = "<invalid>"
+}
 case class BooleanToken(value: Boolean) extends Token with LiteralToken[Boolean] {
   override def toString = if (value) "true" else "false"
 }

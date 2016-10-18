@@ -13,6 +13,6 @@ object BaseResult {
     def create(func: SpecialFunction): ValueResult = SpecialValueResult(func)
   }
   implicit object str extends BaseResult[TypeResult] {
-    def create(func: SpecialFunction): TypeResult = SpecialTypeResult(func)
+    def create(func: SpecialFunction): TypeResult = SpecialTypeResult(InvalidToken(), func)
   }
 }

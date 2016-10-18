@@ -6,13 +6,15 @@ object Interpreter extends Runner[ValueResult, InterpreterContext] {
 
   private[this] def runSpecial(
       context: InterpreterContext,
+      token: Token,
       special: SpecialValueResult,
       args: List[Token]): (InterpreterContext, ValueResult) = {
-    special.func.run(context, args)
+    special.func.run(context, token, args)
   }
 
   private[this] def runLambda(
       context: InterpreterContext,
+      token: Token,
       lambda: LambdaValueResult,
       args: List[Token]): (InterpreterContext, ValueResult) = {
     val actuals = args.map { run(context, _)._2 }
@@ -24,21 +26,23 @@ object Interpreter extends Runner[ValueResult, InterpreterContext] {
 
   private[this] def runFunction(
       context: InterpreterContext,
+      token: Token,
       func: ValueResult,
       args: List[Token]): (InterpreterContext, ValueResult) = {
     func match {
-      case special @ SpecialValueResult(_) => runSpecial(context, special, args)
-      case lambda @ LambdaValueResult(_, _, _) => runLambda(context, lambda, args)
+      case special @ SpecialValueResult(_) => runSpecial(context, token, special, args)
+      case lambda @ LambdaValueResult(_, _, _) => runLambda(context, token, lambda, args)
       case _ => (context, NilValueResult())
     }
   }
 
   private[this] def runFunction(
       context: InterpreterContext,
+      token: Token,
       name: String,
       args: List[Token]): (InterpreterContext, ValueResult) = {
     context.lookup(name) match {
-      case Some(func) => runFunction(context, func, args)
+      case Some(func) => runFunction(context, token, func, args)
       case _ => (context, NilValueResult())
     }
   }
@@ -47,13 +51,11 @@ object Interpreter extends Runner[ValueResult, InterpreterContext] {
       context: InterpreterContext,
       tokens: List[Token]): (InterpreterContext, ValueResult) = {
     tokens match {
-      case IdentToken(name) :: args => runFunction(context, name, args)
+      case IdentToken(name) :: args => runFunction(context, tokens.head, name, args)
       case ExprToken(lst) :: args =>
         val (newContext, func) = runExpr(context, lst)
-        runFunction(newContext, func, args)
-      case _ =>
-        println(s"invalid expression in runExpr: $tokens")
-        (context, NilValueResult())
+        runFunction(newContext, tokens.head, func, args)
+      case _ => (context, NilValueResult())
     }
   }
 
@@ -70,6 +72,7 @@ object Interpreter extends Runner[ValueResult, InterpreterContext] {
       case IntegerToken(value) => (context, IntegerValueResult(value))
       case StringToken(value) => (context, StringValueResult(value))
       case ExprToken(tokens) => runExpr(context, tokens)
+      case InvalidToken() => (context, NilValueResult())
     }
   }
 

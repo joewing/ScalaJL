@@ -1,6 +1,6 @@
 package net.joewing.jl.check
 
-import net.joewing.jl.{Context, Scope, ScopeId}
+import net.joewing.jl.{Context, Scope, ScopeId, Token}
 
 class CheckerContext(
     private val equivalences: Map[TypeId, TypeId],
@@ -17,7 +17,7 @@ class CheckerContext(
 
   private[this] def addLambdaEquivalence(a: LambdaTypeResult, b: LambdaTypeResult): CheckerContext = {
     if (a.args.length != b.args.length) {
-      addBound(new TypeId(), InvalidTypeResult(s"wrong number of arguments"))
+      addBound(new TypeId(), InvalidTypeResult(b.token, "wrong number of arguments"))
     } else {
       (a.args :+ a.ret).zip(b.args :+ b.ret).foldLeft(this) { (context, types) =>
         val (a, b) = types
@@ -27,12 +27,12 @@ class CheckerContext(
   }
 
   def addEquivalence(a: TypeResult, b: TypeResult): CheckerContext = (a, b) match {
-    case (UnknownTypeResult(id1), UnknownTypeResult(id2)) => addEquivalence(id1, id2)
-    case (UnknownTypeResult(id), _) => addBound(id, b)
-    case (_, UnknownTypeResult(id)) => addBound(id, a)
-    case (t1 @ LambdaTypeResult(_, _), t2 @ LambdaTypeResult(_, _)) => addLambdaEquivalence(t1, t2)
-    case (ListTypeResult(t1), ListTypeResult(t2)) => addEquivalence(t1, t2)
-    case (t1, t2) if t1 != t2 => addBound(new TypeId(), InvalidTypeResult(s"type mismatch: $t1 vs $t2"))
+    case (UnknownTypeResult(_, id1), UnknownTypeResult(_, id2)) => addEquivalence(id1, id2)
+    case (UnknownTypeResult(_, id), _) => addBound(id, b)
+    case (_, UnknownTypeResult(_, id)) => addBound(id, a)
+    case (t1 @ LambdaTypeResult(_, _, _), t2 @ LambdaTypeResult(_, _, _)) => addLambdaEquivalence(t1, t2)
+    case (ListTypeResult(_, t1), ListTypeResult(_, t2)) => addEquivalence(t1, t2)
+    case (t1, t2) if t1 != t2 => addBound(new TypeId(), InvalidTypeResult(t2.token, s"type mismatch: $t1 vs $t2"))
     case _ => this
   }
 
@@ -41,7 +41,7 @@ class CheckerContext(
   }
 
   def addBound(id: TypeId, bound: TypeResult): CheckerContext = bound match {
-    case UnknownTypeResult(otherId) => addEquivalence(id, otherId)
+    case UnknownTypeResult(_, otherId) => addEquivalence(id, otherId)
     case _ if bounds.contains(id) => addEquivalence(bounds(id), bound)
     case _ => new CheckerContext(equivalences, bounds + (id -> bound), stack, scopes)
   }
@@ -61,19 +61,20 @@ class CheckerContext(
     allEquivalences(id).flatMap(bounds.get)
   }
 
-  def solve(id: TypeId): TypeResult = {
-    allTypes(id).foldLeft(UnknownTypeResult(new TypeId): TypeResult) {
-      case (UnknownTypeResult(_), b) => b
-      case (a, UnknownTypeResult(_)) => a
+  def solve(token: Token, id: TypeId): TypeResult = {
+    allTypes(id).foldLeft(UnknownTypeResult(token, new TypeId): TypeResult) {
+      case (UnknownTypeResult(_, _), b) => b
+      case (a, UnknownTypeResult(_, _)) => a
       case (a, b) if a == b => a
-      case (a, b) => InvalidTypeResult(s"type mismatch: $a vs $b")
+      case (a, b) => InvalidTypeResult(token, s"type mismatch: $a vs $b")
     }
   }
 
   def solve(result: TypeResult): TypeResult = {
     bounds.values.foldLeft(result.solve(this)) { (acc, value) =>
       (acc, value) match {
-        case (_, InvalidTypeResult(_)) => value
+        case (left @ InvalidTypeResult(_, _), right @ InvalidTypeResult(_, _)) => InvalidTypeResult(left, right)
+        case (_, invalid @ InvalidTypeResult(_, _)) => invalid
         case _ => acc
       }
     }

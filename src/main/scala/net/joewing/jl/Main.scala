@@ -12,7 +12,7 @@ object Main {
         }
         val program = new ExpressionParser(args(0)).parseFile.get
         Checker.run(program) match {
-          case InvalidTypeResult(msg) => println(s"TYPE ERROR: $msg")
+          case invalid: InvalidTypeResult => println(invalid)
           case _ => Interpreter.run(program)
         }
     }

@@ -7,16 +7,20 @@ import net.joewing.jl.interpret._
 class PrintFunction extends SpecialFunction {
   // (print ...)
 
-  def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
-    context.fold(args)(NilTypeResult(): TypeResult) { (oldContext, oldType, token) =>
-      oldType match {
-        case invalid: InvalidTypeResult => (oldContext, oldType)
-        case _ => Checker.run(oldContext, token)
+  def check(context: CheckerContext, expr: Token, args: List[Token]): (CheckerContext, TypeResult) = {
+    context.fold(args)(NilTypeResult(expr): TypeResult) { (oldContext, oldType, token) =>
+      val (newContext, newType) = Checker.run(oldContext, token)
+      (oldType, newType) match {
+        case (left @ InvalidTypeResult(_, _), right @ InvalidTypeResult(_, _)) =>
+          (newContext, InvalidTypeResult(left, right))
+        case (left @ InvalidTypeResult(_, _), _) => (newContext, left)
+        case (_, right @ InvalidTypeResult(_, _)) => (newContext, right)
+        case _ => (newContext, newType)
       }
     }
   }
 
-  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
+  def run(context: InterpreterContext, expr: Token, args: List[Token]): (InterpreterContext, ValueResult) = {
     val result = args.foldLeft((context, NilValueResult()): (InterpreterContext, ValueResult)) { (acc, token) =>
       val (oldContext, _) = acc
       val (newContext, newValue) = Interpreter.run(oldContext, token)

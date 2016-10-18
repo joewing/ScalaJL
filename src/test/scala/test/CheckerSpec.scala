@@ -7,138 +7,141 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class CheckerSpec extends FlatSpec with Matchers {
 
-  private[this] def getProgram(code: String): List[Token] = new ExpressionParser("test").parse(code).get
+  private[this] def checkProgram(code: String): TypeResult = {
+    val program = new ExpressionParser("test").parse(code).get
+    Checker.run(program)
+  }
 
   "integer literals" should "be integers" in {
-    val program = getProgram("1")
-    assert(Checker.run(program) == IntegerTypeResult())
+    val result = checkProgram("1")
+    assert(result.isInstanceOf[IntegerTypeResult])
   }
 
   "boolean literals" should "be booleans" in {
-    val program = getProgram("true")
-    assert(Checker.run(program) == BooleanTypeResult())
+    val result = checkProgram("true")
+    assert(result.isInstanceOf[BooleanTypeResult])
   }
 
   "string literals" should "be strings" in {
-    val program = getProgram("\"test\"")
-    assert(Checker.run(program) == StringTypeResult())
+    val result = checkProgram("\"test\"")
+    assert(result.isInstanceOf[StringTypeResult])
   }
 
   "undefined values" should "be invalid" in {
-    val program = getProgram("test")
-    assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
+    val result = checkProgram("test")
+    assert(result.isInstanceOf[InvalidTypeResult])
   }
 
   "define function" should "return defined type" in {
-    val program = getProgram("(define a 1)")
-    assert(Checker.run(program) == IntegerTypeResult())
+    val result = checkProgram("(define a 1)")
+    assert(result.isInstanceOf[IntegerTypeResult])
   }
 
   it should "set the type of a value" in {
-    val program = getProgram("(define a 1) a")
-    assert(Checker.run(program) == IntegerTypeResult())
+    val result = checkProgram("(define a 1) a")
+    assert(result.isInstanceOf[IntegerTypeResult])
   }
 
   it should "handle recursion" in {
-    val program = getProgram("(define f (lambda (i) (if (< i 5) (+ i (f (+ i 1))) 0)))(f 0)")
-    assert(Checker.run(program) == IntegerTypeResult())
+    val result = checkProgram("(define f (lambda (i) (if (< i 5) (+ i (f (+ i 1))) 0)))(f 0)")
+    assert(result.isInstanceOf[IntegerTypeResult])
   }
 
   "add function" should "return integers" in {
-    val program = getProgram("(+ 2 1)")
-    assert(Checker.run(program) == IntegerTypeResult())
+    val result = checkProgram("(+ 2 1)")
+    assert(result.isInstanceOf[IntegerTypeResult])
   }
 
   it should "handle type errors" in {
-    val program = getProgram("(+ 2 \"asdf\")")
-    assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
+    val result = checkProgram("(+ 2 \"asdf\")")
+    assert(result.isInstanceOf[InvalidTypeResult])
   }
 
   it should "handle undefined values" in {
-    val program = getProgram("(+ 2 a)")
-    assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
+    val result = checkProgram("(+ 2 a)")
+    assert(result.isInstanceOf[InvalidTypeResult])
   }
 
   "if function" should "return the right type" in {
-    val program = getProgram("(if true \"a\" \"b\")")
-    assert(Checker.run(program) == StringTypeResult())
+    val result = checkProgram("(if true \"a\" \"b\")")
+    assert(result.isInstanceOf[StringTypeResult])
   }
 
   it should "handle type mismatches" in {
-    val program = getProgram("(if true 1 \"b\")")
-    assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
+    val result = checkProgram("(if true 1 \"b\")")
+    assert(result.isInstanceOf[InvalidTypeResult])
   }
 
   it should "handle type invalid conditional" in {
-    val program = getProgram("(if 1 \"a\" \"b\")")
-    assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
+    val result = checkProgram("(if 1 \"a\" \"b\")")
+    assert(result.isInstanceOf[InvalidTypeResult])
   }
 
   it should "promote types" in {
-    val program = getProgram("(lambda (a) (if true a 0))")
-    Checker.run(program) should matchPattern {
-      case LambdaTypeResult(List(IntegerTypeResult()), IntegerTypeResult()) =>
+    val result = checkProgram("(lambda (a) (if true a 0))")
+    result should matchPattern {
+      case LambdaTypeResult(_, List(IntegerTypeResult(_)), IntegerTypeResult(_)) =>
     }
   }
 
   "lambda function" should "return lambda type" in {
-    val program = getProgram("(lambda () 1)")
-    Checker.run(program) should matchPattern {
-      case LambdaTypeResult(List(), IntegerTypeResult()) =>
+    val result = checkProgram("(lambda () 1)")
+    result should matchPattern {
+      case LambdaTypeResult(_, List(), IntegerTypeResult(_)) =>
     }
   }
 
   it should "handle unknown types" in {
-    val program = getProgram("(lambda (a) a)")
-    Checker.run(program) should matchPattern {
-      case LambdaTypeResult(List(UnknownTypeResult(_)), UnknownTypeResult(_)) =>
+    val result = checkProgram("(lambda (a) a)")
+    result should matchPattern {
+      case LambdaTypeResult(_, List(UnknownTypeResult(_, _)), UnknownTypeResult(_, _)) =>
     }
   }
 
   it should "promote types" in {
-    val program = getProgram("(lambda (a) (+ a 1))")
-    Checker.run(program) should matchPattern {
-      case LambdaTypeResult(List(IntegerTypeResult()), IntegerTypeResult()) =>
+    val result = checkProgram("(lambda (a) (+ a 1))")
+    result should matchPattern {
+      case LambdaTypeResult(_, List(IntegerTypeResult(_)), IntegerTypeResult(_)) =>
     }
   }
 
   it should "handle calls" in {
-    val program = getProgram("(define f (lambda (a) (if a 1 2)))(f true)")
-    assert(Checker.run(program) == IntegerTypeResult())
+    val result = checkProgram("(define f (lambda (a) (if a 1 2)))(f true)")
+    assert(result.isInstanceOf[IntegerTypeResult])
   }
 
   it should "handle incorrect calls" in {
-    val program = getProgram("(define f (lambda (a) (if a 1 2)))(f 1)")
-    assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
+    val result = checkProgram("(define f (lambda (a) (if a 1 2)))(f 1)")
+    assert(result.isInstanceOf[InvalidTypeResult])
   }
 
   "list function" should "create lists" in {
-    val program = getProgram("(list 1 2 3)")
-    Checker.run(program) should matchPattern {
-      case ListTypeResult(IntegerTypeResult()) =>
+    val result = checkProgram("(list 1 2 3)")
+    result should matchPattern {
+      case ListTypeResult(_, IntegerTypeResult(_)) =>
     }
   }
 
   "head function" should "return the right type" in {
-    val program = getProgram("(head (list 1 2) 3)")
-    assert(Checker.run(program) == IntegerTypeResult())
+    val result = checkProgram("(head (list 1 2) 3)")
+    assert(result.isInstanceOf[IntegerTypeResult])
   }
 
   "tail function" should "return a list" in {
-    val program = getProgram("(tail (list 1 2))")
-    Checker.run(program) should matchPattern {
-      case ListTypeResult(IntegerTypeResult()) =>
+    val result = checkProgram("(tail (list 1 2))")
+    result should matchPattern {
+      case ListTypeResult(_, IntegerTypeResult(_)) =>
     }
   }
 
   "empty? function" should "return a boolean" in {
-    val program = getProgram("(empty? (list))")
-    assert(Checker.run(program) == BooleanTypeResult())
+    val result = checkProgram("(empty? (list))")
+    assert(result.isInstanceOf[BooleanTypeResult])
   }
 
   it should "handle type errors" in {
-    val program = getProgram("(empty? 3)")
-    assert(Checker.run(program).isInstanceOf[InvalidTypeResult])
+    val result = checkProgram("(empty? 3)")
+    assert(result.isInstanceOf[InvalidTypeResult])
   }
 
 }

@@ -20,21 +20,23 @@ abstract class ConditionalFunction extends SpecialFunction {
     }
   }
 
-  def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
+  def check(context: CheckerContext, expr: Token, args: List[Token]): (CheckerContext, TypeResult) = {
     if (args.length != 2) {
-      (context, InvalidTypeResult("wrong number of arguments to conditional"))
+      (context, InvalidTypeResult(expr, s"wrong number of arguments to conditional; got ${args.length}, expected 2"))
     } else {
       val (leftContext, leftType) = Checker.run(context, args.head)
       val (rightContext, rightType) = Checker.run(leftContext, args(1))
       (leftType, rightType) match {
-        case (InvalidTypeResult(_), _) => (rightContext, leftType)
-        case (_, InvalidTypeResult(_)) => (rightContext, rightType)
-        case _ => (rightContext.addEquivalence(leftType, rightType), BooleanTypeResult())
+        case (left @ InvalidTypeResult(_, _), right @ InvalidTypeResult(_, _)) =>
+          (rightContext, InvalidTypeResult(left, right))
+        case (InvalidTypeResult(_, _), _) => (rightContext, leftType)
+        case (_, InvalidTypeResult(_, _)) => (rightContext, rightType)
+        case _ => (rightContext.addEquivalence(leftType, rightType), BooleanTypeResult(expr))
       }
     }
   }
 
-  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
+  def run(context: InterpreterContext, expr: Token, args: List[Token]): (InterpreterContext, ValueResult) = {
     assert(args.length == 2)
     val (leftContext, leftValue) = Interpreter.run(context, args.head)
     val (rightContext, rightValue) = Interpreter.run(leftContext, args(1))

@@ -8,29 +8,26 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       stack: List[ScopeId],
       scopes: Map[ScopeId, Scope[TypeResult]]): CheckerContext = new CheckerContext(Map(), Map(), stack, scopes)
 
-  val nil: TypeResult = NilTypeResult()
+  val nil: TypeResult = NilTypeResult(InvalidToken())
 
   def run(context: CheckerContext, token: Token): (CheckerContext, TypeResult) = {
     token match {
       case IdentToken(ident) =>
         context.lookup(ident) match {
           case Some(result) => (context, result)
-          case None =>
-            val (file, line) = (token.file, token.line)
-            val msg = s"$file[$line]: not found: $ident"
-            println(msg)
-            (context, InvalidTypeResult(msg))
+          case None => (context, InvalidTypeResult(token, s"not found: $ident"))
         }
-      case BooleanToken(_) => (context, BooleanTypeResult())
-      case IntegerToken(_) => (context, IntegerTypeResult())
-      case StringToken(_) => (context, StringTypeResult())
+      case _: BooleanToken => (context, BooleanTypeResult(token))
+      case _: IntegerToken => (context, IntegerTypeResult(token))
+      case _: StringToken => (context, StringTypeResult(token))
+      case _: InvalidToken => (context, InvalidTypeResult(token, s"invalid token"))
       case ExprToken(tokens) => runExpr(context, token, tokens)
     }
   }
 
   override def postprocess(context: CheckerContext, result: TypeResult): TypeResult = {
     context.solve(result) match {
-      case UnknownTypeResult(_) => InvalidTypeResult(s"could not resolve type of $result")
+      case _: UnknownTypeResult => InvalidTypeResult(result.token, s"could not resolve type of $result")
       case other => other
     }
   }
@@ -44,11 +41,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       case (exprToken @ ExprToken(lst)) :: args =>
         val (newContext, func) = runExpr(context, exprToken, lst)
         runFunction(newContext, exprToken, func, args)
-      case _ =>
-        val (file, line) = (token.file, token.line)
-        val msg = s"$file[$line]: invalid expression: $tokens"
-        println(msg)
-        (context, InvalidTypeResult(msg))
+      case _ => (context, InvalidTypeResult(token, "invalid expression"))
     }
   }
 
@@ -59,11 +52,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       args: List[Token]): (CheckerContext, TypeResult) = {
     context.lookup(name) match {
       case Some(func) => runFunction(context, token, func, args)
-      case None =>
-        val (file, line) = (token.file, token.line)
-        val msg = s"$file[$line]: function not found: $name"
-        println(msg)
-        (context, InvalidTypeResult(msg))
+      case None => (context, InvalidTypeResult(token, s"function not found: $name"))
     }
   }
 
@@ -73,14 +62,10 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       func: TypeResult,
       args: List[Token]): (CheckerContext, TypeResult) = {
     func match {
-      case special @ SpecialTypeResult(_) => runSpecial(context, token, special, args)
-      case lambda @ LambdaTypeResult(_, _) => runLambda(context, token, lambda, args)
-      case unknown @ UnknownTypeResult(id) => runUnknown(context, token, unknown, args)
-      case _ =>
-        val (file, line) = (token.file, token.line)
-        val msg = s"$file[$line]: not a function: $func"
-        println(msg)
-        (context, InvalidTypeResult(msg))
+      case special: SpecialTypeResult => runSpecial(context, token, special, args)
+      case lambda: LambdaTypeResult => runLambda(context, token, lambda, args)
+      case unknown: UnknownTypeResult => runUnknown(context, token, unknown, args)
+      case _ => (context, InvalidTypeResult(token, s"not a function: $func"))
     }
   }
 
@@ -101,8 +86,8 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       unknown: UnknownTypeResult,
       args: List[Token]): (CheckerContext, TypeResult) = {
     val (paramContext, paramTypes) = getParameterTypes(context, args)
-    val retType = UnknownTypeResult(new TypeId())
-    val lambdaType = LambdaTypeResult(paramTypes, retType)
+    val retType = UnknownTypeResult(token, new TypeId())
+    val lambdaType = LambdaTypeResult(token, paramTypes, retType)
     val boundedContext = paramContext.addBound(unknown.id, lambdaType)
     (boundedContext, retType)
   }
@@ -125,7 +110,7 @@ object Checker extends Runner[TypeResult, CheckerContext] {
       token: Token,
       special: SpecialTypeResult,
       args: List[Token]): (CheckerContext, TypeResult) = {
-    special.func.check(context, args)
+    special.func.check(context, token, args)
   }
 
 }
