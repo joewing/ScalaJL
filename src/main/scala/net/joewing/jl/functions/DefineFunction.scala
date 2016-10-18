@@ -13,8 +13,7 @@ class DefineFunction extends SpecialFunction {
         val tempType = UnknownTypeResult(new TypeId())
         val tempContext = context.updateScope(Map(name -> tempType))
         val (resultContext, resultType) = Checker.run(tempContext, rest)
-        val newContext = resultContext.addEquivalence(tempType, resultType)
-        (newContext, resultType)
+        (resultContext.addEquivalence(tempType, resultType), resultType)
       case _ =>
         (context, InvalidTypeResult("invalid arguments to define"))
     }
@@ -23,10 +22,7 @@ class DefineFunction extends SpecialFunction {
     args match {
       case IdentToken(name) :: rest =>
         val (resultContext, resultValue) = Interpreter.run(context, rest)
-        val newContext = resultContext.updateScope(Map(name -> resultValue))
-        (newContext, resultValue)
-      case _ =>
-        println("invalid arguments to define")
-        (context, NilValueResult())
+        (resultContext.updateScope(Map(name -> resultValue)), resultValue)
+      case _ => (context, NilValueResult())
     }
 }

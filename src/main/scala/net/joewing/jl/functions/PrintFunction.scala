@@ -8,10 +8,9 @@ class PrintFunction extends SpecialFunction {
   // (print ...)
 
   def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
-    args.foldLeft((context, NilTypeResult()): (CheckerContext, TypeResult)) { (acc, token) =>
-      val (oldContext, oldValue) = acc
-      oldValue match {
-        case InvalidTypeResult(_) => acc
+    context.fold(args)(NilTypeResult(): TypeResult) { (oldContext, oldType, token) =>
+      oldType match {
+        case invalid: InvalidTypeResult => (oldContext, oldType)
         case _ => Checker.run(oldContext, token)
       }
     }

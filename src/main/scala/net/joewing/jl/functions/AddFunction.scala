@@ -9,8 +9,7 @@ class AddFunction extends SpecialFunction {
   // (add ...)
 
   def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) =
-    args.foldLeft((context, IntegerTypeResult()): (CheckerContext, TypeResult)) { (acc, token) =>
-      val (oldContext, oldType) = acc
+    context.fold(args)(IntegerTypeResult(): TypeResult) { (oldContext, oldType, token) =>
       val (newContext, newType) = Checker.run(oldContext, token)
       (oldType, newType) match {
         case (IntegerTypeResult(), IntegerTypeResult()) => (newContext, IntegerTypeResult())
@@ -22,18 +21,14 @@ class AddFunction extends SpecialFunction {
       }
     }
 
-  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
-    args.foldLeft((context, IntegerValueResult(0))) { (acc, tok) =>
-      val (oldContext, oldValue) = acc
-      val (newContext, newValue) = Interpreter.run(oldContext, tok)
+  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) =
+    context.fold(args)(IntegerValueResult(0)) { (oldContext, oldValue, token) =>
+      val (newContext, newValue) = Interpreter.run(oldContext, token)
       newValue match {
         case IntegerValueResult(i) => (newContext, IntegerValueResult(oldValue.value + i))
-        case _ =>
-          println("invalid argument to add: " + tok)
-          (newContext, IntegerValueResult(0))
+        case _ => (newContext, IntegerValueResult(0))
       }
     }
-  }
 
   def generate(args: List[Token]): Program = ???
 }

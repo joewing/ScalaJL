@@ -8,26 +8,28 @@ abstract class ConditionalFunction extends SpecialFunction {
 
   protected def test[T : Ordering](left: T, right: T): Boolean
 
+  import Ordering.Implicits._
+
+  private implicit object ValueResultOrdering extends Ordering[ValueResult] {
+    def compare(left: ValueResult, right: ValueResult): Int = {
+      (left, right) match {
+        case (IntegerValueResult(a), IntegerValueResult(b)) => implicitly[Ordering[Int]].compare(a, b)
+        case (StringValueResult(a), StringValueResult(b)) => implicitly[Ordering[String]].compare(a, b)
+        case (ListValueResult(a), ListValueResult(b)) => implicitly[Ordering[List[ValueResult]]].compare(a, b)
+      }
+    }
+  }
+
   def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
     if (args.length != 2) {
       (context, InvalidTypeResult("wrong number of arguments to conditional"))
     } else {
-      val (leftContext, leftValue) = Checker.run(context, args.head)
-      val (rightContext, rightValue) = Checker.run(leftContext, args(1))
-      (leftValue, rightValue) match {
-        case (InvalidTypeResult(_), _) => (rightContext, leftValue)
-        case (_, InvalidTypeResult(_)) => (rightContext, rightValue)
-        case (IntegerTypeResult(), IntegerTypeResult()) => (rightContext, BooleanTypeResult())
-        case (IntegerTypeResult(), UnknownTypeResult(b)) =>
-          (rightContext.addBound(b, IntegerTypeResult()), BooleanTypeResult())
-        case (UnknownTypeResult(a), IntegerTypeResult()) =>
-          (rightContext.addBound(a, IntegerTypeResult()), BooleanTypeResult())
-        case (StringTypeResult(), StringTypeResult()) => (rightContext, BooleanTypeResult())
-        case (StringTypeResult(), UnknownTypeResult(b)) =>
-          (rightContext.addBound(b, StringTypeResult()), BooleanTypeResult())
-        case (UnknownTypeResult(a), StringTypeResult()) =>
-          (rightContext.addBound(a, StringTypeResult()), BooleanTypeResult())
-        case _ => (rightContext, InvalidTypeResult("wrong types to conditional"))
+      val (leftContext, leftType) = Checker.run(context, args.head)
+      val (rightContext, rightType) = Checker.run(leftContext, args(1))
+      (leftType, rightType) match {
+        case (InvalidTypeResult(_), _) => (rightContext, leftType)
+        case (_, InvalidTypeResult(_)) => (rightContext, rightType)
+        case _ => (rightContext.addEquivalence(leftType, rightType), BooleanTypeResult())
       }
     }
   }
@@ -37,8 +39,10 @@ abstract class ConditionalFunction extends SpecialFunction {
     val (leftContext, leftValue) = Interpreter.run(context, args.head)
     val (rightContext, rightValue) = Interpreter.run(leftContext, args(1))
     val result = (leftValue, rightValue) match {
+      case (BooleanValueResult(a), BooleanValueResult(b)) => test(a, b)
       case (IntegerValueResult(a), IntegerValueResult(b)) => test(a, b)
       case (StringValueResult(a), StringValueResult(b)) => test(a, b)
+      case (ListValueResult(a), ListValueResult(b)) => test(a, b)
       case _ => false
     }
     (rightContext, BooleanValueResult(result))

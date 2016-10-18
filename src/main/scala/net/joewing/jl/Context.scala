@@ -3,6 +3,7 @@ package net.joewing.jl
 abstract class Context[T, C <: Context[T, C]](
     val stack: List[ScopeId],
     protected val scopes: Map[ScopeId, Scope[T]]) {
+  self: C =>
 
   protected def create(stack: List[ScopeId], scopes: Map[ScopeId, Scope[T]]): C
 
@@ -28,5 +29,16 @@ abstract class Context[T, C <: Context[T, C]](
   }
 
   def leaveScope: C = create(stack.tail, scopes)
+
+  def map[A, B](lst: List[A])(f: (C, A) => (C, B)): (C, List[B]) = lst.foldLeft((this, List[B]())) { (acc, value) =>
+    val (oldContext, oldValues) = acc
+    val (newContext, newValue) = f(oldContext, value)
+    (newContext, oldValues :+ newValue)
+  }
+
+  def fold[A, B](lst: List[A])(zero: B)(f: (C, B, A) => (C, B)) = lst.foldLeft((this, zero)) { (acc, value) =>
+    val (oldContext, oldValue) = acc
+    f(oldContext, oldValue, value)
+  }
 
 }

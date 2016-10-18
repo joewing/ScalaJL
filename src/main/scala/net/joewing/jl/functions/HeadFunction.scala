@@ -6,28 +6,23 @@ import net.joewing.jl.interpret._
 
 class HeadFunction extends SpecialFunction {
   override def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
-    if (args.length != 2) {
-      (context, InvalidTypeResult("too few arguments to head"))
-    } else {
-      val (listContext, listType) = Checker.run(context, args.head)
-      val (argContext, containedType) = Checker.run(listContext, args(1))
-      val expectedListType = ListTypeResult(containedType)
-      val newContext = argContext.addEquivalence(listType, expectedListType)
-      (newContext, containedType)
+    args match {
+      case first :: second :: Nil =>
+        val (listContext, listType) = Checker.run(context, first)
+        val (argContext, containedType) = Checker.run(listContext, second)
+        val expectedListType = ListTypeResult(containedType)
+        (argContext.addEquivalence(listType, expectedListType), containedType)
+      case _ => (context, InvalidTypeResult("wrong number of arguments to head"))
     }
   }
 
   override def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
     assert(args.length == 2)
-    val (_, listValue) = Interpreter.run(context, args.head)
+    val (newContext, listValue) = Interpreter.run(context, args.head)
     listValue match {
-      case ListValueResult(values) =>
-        if (values.isEmpty) {
-          Interpreter.run(context, args(1))
-        } else {
-          (context, values.head)
-        }
-      case _ => (context, NilValueResult())
+      case ListValueResult(values) if values.isEmpty => Interpreter.run(newContext, args(1))
+      case ListValueResult(values) => (newContext, values.head)
+      case _ => (newContext, NilValueResult())
     }
   }
 }

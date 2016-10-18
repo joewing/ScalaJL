@@ -5,19 +5,20 @@ import net.joewing.jl.check._
 import net.joewing.jl.interpret._
 
 class TailFunction extends SpecialFunction {
-  override def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
+  // (tail lst)
+
+  def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
     if (args.length != 1) {
       (context, InvalidTypeResult("wrong number of arguments to tail"))
     } else {
       val (argContext, argType) = Checker.run(context, args.head)
       val containedType = UnknownTypeResult(new TypeId())
       val expectedType = ListTypeResult(containedType)
-      val boundedContext = argContext.addEquivalence(argType, expectedType)
-      (boundedContext, argType)
+      (argContext.addEquivalence(argType, expectedType), argType)
     }
   }
 
-  override def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
+  def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
     val (newContext, value) = Interpreter.run(context, args.head)
     value match {
       case ListValueResult(values) => (newContext, ListValueResult(values.tail))

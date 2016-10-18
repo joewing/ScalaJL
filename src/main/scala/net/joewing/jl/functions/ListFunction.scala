@@ -8,16 +8,15 @@ class ListFunction extends SpecialFunction {
   // (list ...)
 
   def check(context: CheckerContext, args: List[Token]): (CheckerContext, TypeResult) = {
-    val zero = (context, UnknownTypeResult(new TypeId())): (CheckerContext, TypeResult)
-    val (argContext, argType) = args.foldLeft(zero) { (acc, token) =>
-      val (oldContext, oldType) = acc
+    val result = context.fold(args)(UnknownTypeResult(new TypeId()): TypeResult) { (oldContext, oldType, token) =>
       val (newContext, newType) = Checker.run(oldContext, token)
       (newContext.addEquivalence(oldType, newType), newType)
     }
-    (argContext, ListTypeResult(argType))
+    (result._1, ListTypeResult(result._2))
   }
 
   def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
-    (context, ListValueResult(args.map(Interpreter.run(context, _)._2)))
+    val result = context.map(args)(Interpreter.run)
+    (result._1, ListValueResult(result._2))
   }
 }

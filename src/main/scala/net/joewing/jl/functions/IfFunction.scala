@@ -14,8 +14,7 @@ class IfFunction extends SpecialFunction {
     val (condContext, condType) = Checker.run(context, args.head)
     val (trueContext, trueType) = Checker.run(condContext, args(1))
     val (falseContext, falseType) = Checker.run(trueContext, args(2))
-    val newContext = falseContext.addEquivalence(trueType, falseType).addEquivalence(condType, BooleanTypeResult())
-    (newContext, falseType)
+    (falseContext.addEquivalence(trueType, falseType).addEquivalence(condType, BooleanTypeResult()), falseType)
   }
 
   def run(context: InterpreterContext, args: List[Token]): (InterpreterContext, ValueResult) = {
