@@ -12,6 +12,7 @@ object Functions {
     "<="      -> wrap(new LEFunction),
     "<"       -> wrap(new LTFunction),
     "+"       -> wrap(new AddFunction),
+    "-"       -> wrap(new SubtractFunction),
     "define"  -> wrap(new DefineFunction),
     "empty?"  -> wrap(new EmptyFunction),
     "head"    -> wrap(new HeadFunction),

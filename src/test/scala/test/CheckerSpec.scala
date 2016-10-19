@@ -61,6 +61,16 @@ class CheckerSpec extends FlatSpec with Matchers {
     assert(result.isInstanceOf[InvalidTypeResult])
   }
 
+  "subtract function" should "return integers" in {
+    val result = checkProgram("(- 2 1)")
+    assert(result.isInstanceOf[IntegerTypeResult])
+  }
+
+  it should "handle no arguments" in {
+    val result = checkProgram("(-)")
+    assert(result.isInstanceOf[InvalidTypeResult])
+  }
+
   "if function" should "return the right type" in {
     val result = checkProgram("(if true \"a\" \"b\")")
     assert(result.isInstanceOf[StringTypeResult])

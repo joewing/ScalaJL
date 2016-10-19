@@ -36,6 +36,11 @@ class InterpreterSpec extends FlatSpec {
     assert(result == IntegerValueResult(6))
   }
 
+  "subtract function" should "subtract" in {
+    val result = runProgram("(- 5 2)")
+    assert(result == IntegerValueResult(3))
+  }
+
   "if function" should "handle true" in {
     val result = runProgram("(if true 1 2)")
     assert(result == IntegerValueResult(1))

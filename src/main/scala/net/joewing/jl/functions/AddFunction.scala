@@ -6,7 +6,7 @@ import net.joewing.jl.il.Program
 import net.joewing.jl.interpret._
 
 class AddFunction extends SpecialFunction {
-  // (add ...)
+  // (+ ...)
 
   def check(context: CheckerContext, expr: Token, args: List[Token]): (CheckerContext, TypeResult) = {
     val valueType = IntegerTypeResult(expr)
