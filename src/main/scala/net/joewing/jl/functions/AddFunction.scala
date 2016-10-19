@@ -8,20 +8,14 @@ import net.joewing.jl.interpret._
 class AddFunction extends SpecialFunction {
   // (add ...)
 
-  def check(context: CheckerContext, expr: Token, args: List[Token]): (CheckerContext, TypeResult) =
-    context.fold(args)(IntegerTypeResult(expr): TypeResult) { (oldContext, oldType, token) =>
+  def check(context: CheckerContext, expr: Token, args: List[Token]): (CheckerContext, TypeResult) = {
+    val valueType = IntegerTypeResult(expr)
+    context.fold(args)(valueType: TypeResult) { (oldContext, oldType, token) =>
       val (newContext, newType) = Checker.run(oldContext, token)
-      (oldType, newType) match {
-        case (IntegerTypeResult(_), IntegerTypeResult(_)) => (newContext, IntegerTypeResult(expr))
-        case (IntegerTypeResult(_), unknown @ UnknownTypeResult(_, _)) =>
-          (newContext.addEquivalence(unknown, IntegerTypeResult(expr)), IntegerTypeResult(expr))
-        case (left @ InvalidTypeResult(_, _), right @ InvalidTypeResult(_, _)) =>
-          (newContext, InvalidTypeResult(left, right))
-        case (invalid @ InvalidTypeResult(_, _), _) => (newContext, invalid)
-        case (_, invalid @ InvalidTypeResult(_, _)) => (newContext, invalid)
-        case _ => (newContext, InvalidTypeResult(expr, s"invalid types for add: $oldType vs $newType"))
-      }
+      val boundContext = newContext.addEquivalence(newType, valueType)
+      (boundContext, valueType)
     }
+  }
 
   def run(context: InterpreterContext, expr: Token, args: List[Token]): (InterpreterContext, ValueResult) =
     context.fold(args)(IntegerValueResult(0)) { (oldContext, oldValue, token) =>

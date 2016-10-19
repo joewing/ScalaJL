@@ -26,13 +26,7 @@ abstract class ConditionalFunction extends SpecialFunction {
     } else {
       val (leftContext, leftType) = Checker.run(context, args.head)
       val (rightContext, rightType) = Checker.run(leftContext, args(1))
-      (leftType, rightType) match {
-        case (left @ InvalidTypeResult(_, _), right @ InvalidTypeResult(_, _)) =>
-          (rightContext, InvalidTypeResult(left, right))
-        case (InvalidTypeResult(_, _), _) => (rightContext, leftType)
-        case (_, InvalidTypeResult(_, _)) => (rightContext, rightType)
-        case _ => (rightContext.addEquivalence(leftType, rightType), BooleanTypeResult(expr))
-      }
+      (rightContext.addEquivalence(leftType, rightType), BooleanTypeResult(expr))
     }
   }
 

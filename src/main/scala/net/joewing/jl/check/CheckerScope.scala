@@ -1,6 +1,6 @@
 package net.joewing.jl.check
 
-import net.joewing.jl.{Scope, ScopeId}
+import net.joewing.jl.{Scope, ScopeId, Token}
 
 class CheckerScope(
     val generics: Map[TypeId, TypeResult],
@@ -10,7 +10,8 @@ class CheckerScope(
 
   def create(values: Map[String, TypeResult]): CheckerScope = new CheckerScope(generics, id, values)
 
-  def setGeneric(anyId: TypeId, other: TypeResult): CheckerScope =
+  def setGeneric(anyId: TypeId, other: TypeResult): CheckerScope = {
     new CheckerScope(generics + (anyId -> other), id, values)
+  }
 
 }

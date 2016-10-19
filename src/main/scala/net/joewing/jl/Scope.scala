@@ -1,8 +1,6 @@
 package net.joewing.jl
 
-class ScopeId {
-  override def toString = hashCode.toString
-}
+class ScopeId extends ObjectId
 
 abstract class Scope[T, SCOPE <: Scope[T, SCOPE]](val id: ScopeId, val values: Map[String, T]) {
 

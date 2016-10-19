@@ -2,7 +2,7 @@ package net.joewing.jl
 
 abstract class Context[T, SCOPE <: Scope[T, SCOPE], CONTEXT <: Context[T, SCOPE, CONTEXT]](
     val stack: List[ScopeId],
-    protected val scopes: Map[ScopeId, SCOPE]) {
+    val scopes: Map[ScopeId, SCOPE]) {
   self: CONTEXT =>
 
   protected def create(stack: List[ScopeId], scopes: Map[ScopeId, SCOPE]): CONTEXT

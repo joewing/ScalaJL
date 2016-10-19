@@ -8,7 +8,7 @@ class ListFunction extends SpecialFunction {
   // (list ...)
 
   def check(context: CheckerContext, expr: Token, args: List[Token]): (CheckerContext, TypeResult) = {
-    val result = context.fold(args)(UnknownTypeResult(expr, new TypeId()): TypeResult) { (oldContext, oldType, token) =>
+    val result = context.fold(args)(UnknownTypeResult(expr, new TypeId): TypeResult) { (oldContext, oldType, token) =>
       val (newContext, newType) = Checker.run(oldContext, token)
       (newContext.addEquivalence(oldType, newType), newType)
     }

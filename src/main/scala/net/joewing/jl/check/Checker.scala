@@ -6,7 +6,7 @@ object Checker extends Runner[TypeResult, CheckerScope, CheckerContext] {
 
   protected def createContext(
       stack: List[ScopeId],
-      scopes: Map[ScopeId, CheckerScope]): CheckerContext = new CheckerContext(Map(), Map(), stack, scopes)
+      scopes: Map[ScopeId, CheckerScope]): CheckerContext = new CheckerContext(Map(), Map(), Map(), stack, scopes)
 
   val nil: TypeResult = NilTypeResult(InvalidToken())
 
@@ -87,11 +87,12 @@ object Checker extends Runner[TypeResult, CheckerScope, CheckerContext] {
       token: Token,
       unknown: UnknownTypeResult,
       args: List[Token]): (CheckerContext, TypeResult) = {
-    val (paramContext, paramTypes) = getParameterTypes(context, args)
-    val retType = UnknownTypeResult(token, new TypeId())
+    val nestedContext = context.enterScope
+    val (paramContext, paramTypes) = getParameterTypes(nestedContext, args)
+    val retType = UnknownTypeResult(token, new TypeId)
     val lambdaType = LambdaTypeResult(token, paramTypes, retType)
-    val boundedContext = paramContext.addEquivalence(unknown, lambdaType)
-    (boundedContext, retType)
+    val boundContext = paramContext.addEquivalence(unknown, lambdaType)
+    (boundContext.leaveScope, retType.solve(boundContext))
   }
 
   private[this] def runLambda(
@@ -99,12 +100,13 @@ object Checker extends Runner[TypeResult, CheckerScope, CheckerContext] {
       token: Token,
       lambda: LambdaTypeResult,
       args: List[Token]): (CheckerContext, TypeResult) = {
-    val (paramContext, paramTypes) = getParameterTypes(context, args)
+    val nestedContext = context.enterScope
+    val (paramContext, paramTypes) = getParameterTypes(nestedContext, args)
     val equivContext = lambda.args.zip(paramTypes).foldLeft(paramContext) { (context, types) =>
       val (actual, expected) = types
       context.addEquivalence(actual, expected)
     }
-    (equivContext, lambda.ret)
+    (equivContext.leaveScope, lambda.ret)
   }
 
   private[this] def runSpecial(

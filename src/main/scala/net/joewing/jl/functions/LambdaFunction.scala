@@ -33,7 +33,9 @@ class LambdaFunction extends SpecialFunction {
           }
           val nestedContext = context.enterScope.updateScope(parameterTypes)
           val (retContext, retType) = Checker.run(nestedContext, args.tail)
-          (retContext.leaveScope, LambdaTypeResult(expr, retContext.valueList(parameters), retType).fix(retContext))
+          val result = LambdaTypeResult(expr, retContext.valueList(parameters), retType).solve(retContext)
+          val (fixedContext, fixedResult) = result.fix(retContext)
+          (fixedContext.leaveScope, fixedResult)
       }
     }
   }
