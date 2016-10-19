@@ -13,8 +13,8 @@ class AddFunction extends SpecialFunction {
       val (newContext, newType) = Checker.run(oldContext, token)
       (oldType, newType) match {
         case (IntegerTypeResult(_), IntegerTypeResult(_)) => (newContext, IntegerTypeResult(expr))
-        case (IntegerTypeResult(_), UnknownTypeResult(_, a)) =>
-          (newContext.addBound(a, IntegerTypeResult(expr)), IntegerTypeResult(expr))
+        case (IntegerTypeResult(_), unknown @ UnknownTypeResult(_, _)) =>
+          (newContext.addEquivalence(unknown, IntegerTypeResult(expr)), IntegerTypeResult(expr))
         case (left @ InvalidTypeResult(_, _), right @ InvalidTypeResult(_, _)) =>
           (newContext, InvalidTypeResult(left, right))
         case (invalid @ InvalidTypeResult(_, _), _) => (newContext, invalid)

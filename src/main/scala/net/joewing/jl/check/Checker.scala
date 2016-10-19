@@ -90,7 +90,7 @@ object Checker extends Runner[TypeResult, CheckerScope, CheckerContext] {
     val (paramContext, paramTypes) = getParameterTypes(context, args)
     val retType = UnknownTypeResult(token, new TypeId())
     val lambdaType = LambdaTypeResult(token, paramTypes, retType)
-    val boundedContext = paramContext.addBound(unknown.id, lambdaType)
+    val boundedContext = paramContext.addEquivalence(unknown, lambdaType)
     (boundedContext, retType)
   }
 

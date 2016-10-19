@@ -24,7 +24,6 @@ case class UnknownTypeResult(token: Token, id: TypeId) extends TypeResult {
 }
 
 case class AnyTypeResult(token: Token, id: TypeId) extends TypeResult {
-  override def solve(context: CheckerContext): TypeResult = context.solve(token, id)
   override def toString = s"<any $id>"
   override def equals(obj: Any): Boolean = obj match {
     case a: AnyTypeResult => a.id == id
