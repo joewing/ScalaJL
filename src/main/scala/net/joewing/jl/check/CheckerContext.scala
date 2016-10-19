@@ -1,19 +1,19 @@
 package net.joewing.jl.check
 
-import net.joewing.jl.{Context, Scope, ScopeId, Token}
+import net.joewing.jl.{Context, ScopeId, Token}
 
 class CheckerContext(
     private val equivalences: Map[TypeId, TypeId],
     private val bounds: Map[TypeId, TypeResult],
     _stack: List[ScopeId],
-    _scopes: Map[ScopeId, Scope[TypeResult]])
-  extends Context[TypeResult, CheckerContext](_stack, _scopes) {
+    _scopes: Map[ScopeId, CheckerScope])
+  extends Context[TypeResult, CheckerScope, CheckerContext](_stack, _scopes) {
 
-  override protected def create(
-      stack: List[ScopeId],
-      scopes: Map[ScopeId, Scope[TypeResult]]): CheckerContext = {
+  protected def create(stack: List[ScopeId], scopes: Map[ScopeId, CheckerScope]): CheckerContext = {
     new CheckerContext(equivalences, bounds, stack, scopes)
   }
+
+  def newScope: CheckerScope = new CheckerScope(Map(), new ScopeId(), Map())
 
   private[this] def addLambdaEquivalence(a: LambdaTypeResult, b: LambdaTypeResult): CheckerContext = {
     if (a.args.length != b.args.length) {
@@ -66,7 +66,9 @@ class CheckerContext(
       case (UnknownTypeResult(_, _), b) => b
       case (a, UnknownTypeResult(_, _)) => a
       case (a, b) if a == b => a
-      case (a, b) => InvalidTypeResult(token, s"type mismatch: $a vs $b")
+      case (a, b @ AnyTypeResult(_, _)) => println("one"); addEquivalence(a, b).solve(token, id)
+      case (a @ AnyTypeResult(_, _), b) => println("two"); addEquivalence(b, a).solve(token, id)
+      case (a, b) => println("what"); InvalidTypeResult(token, s"type mismatch: $a vs $b")
     }
   }
 

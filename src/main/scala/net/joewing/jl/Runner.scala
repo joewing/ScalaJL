@@ -2,31 +2,33 @@ package net.joewing.jl
 
 import net.joewing.jl.functions.Functions
 
-abstract class Runner[T : BaseResult, C <: Context[T, C]] {
+abstract class Runner[T : BaseResult, SCOPE <: Scope[T, SCOPE], CONTEXT <: Context[T, SCOPE, CONTEXT]] {
 
   protected val nil: T
 
-  protected def createContext(stack: List[ScopeId], scopes: Map[ScopeId, Scope[T]]): C
+  protected def createContext(stack: List[ScopeId], scopes: Map[ScopeId, SCOPE]): CONTEXT
 
-  def run(context: C, token: Token): (C, T)
+  def run(context: CONTEXT, token: Token): (CONTEXT, T)
 
   private[this] val builtins = Functions.apply[T]()
 
-  private[this] val baseScope: Scope[T] = new Scope[T](new ScopeId(), builtins)
+  private[this] val baseContext: CONTEXT = {
+    val emptyContext = createContext(List(), Map())
+    val baseScope = emptyContext.newScope.update(builtins)
+    createContext(List(baseScope.id), Map(baseScope.id -> baseScope))
+  }
 
-  private[this] val baseContext: C = createContext(List(baseScope.id), Map(baseScope.id -> baseScope))
-
-  final def run(context: C, tokens: List[Token]): (C, T) = {
+  final def run(context: CONTEXT, tokens: List[Token]): (CONTEXT, T) = {
     tokens.foldLeft((context, nil)) { (acc, token) =>
       val (oldContext, _) = acc
       run(oldContext, token)
     }
   }
 
-  protected def postprocess(context: C, result: T): T = result
+  protected def postprocess(context: CONTEXT, result: T): T = result
 
   def run(lst: List[Token]): T = {
-    val result = lst.foldLeft((baseContext, nil): (C, T)) { (acc, token) =>
+    val result = lst.foldLeft((baseContext, nil): (CONTEXT, T)) { (acc, token) =>
       val (context, _) = acc
       run(context, token)
     }

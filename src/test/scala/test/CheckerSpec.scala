@@ -1,6 +1,5 @@
 package test
 
-import net.joewing.jl.Token
 import net.joewing.jl.check._
 import net.joewing.jl.parse._
 import org.scalatest.{FlatSpec, Matchers}
@@ -94,7 +93,7 @@ class CheckerSpec extends FlatSpec with Matchers {
   it should "handle unknown types" in {
     val result = checkProgram("(lambda (a) a)")
     result should matchPattern {
-      case LambdaTypeResult(_, List(UnknownTypeResult(_, _)), UnknownTypeResult(_, _)) =>
+      case LambdaTypeResult(_, List(AnyTypeResult(_, _)), AnyTypeResult(_, _)) =>
     }
   }
 
@@ -113,6 +112,13 @@ class CheckerSpec extends FlatSpec with Matchers {
   it should "handle incorrect calls" in {
     val result = checkProgram("(define f (lambda (a) (if a 1 2)))(f 1)")
     assert(result.isInstanceOf[InvalidTypeResult])
+  }
+
+  it should "be generic" in {
+    val result = checkProgram("(define f (lambda (a) (list a)))(f 1)(f true)")
+    result should matchPattern {
+      case ListTypeResult(_, BooleanTypeResult(_)) =>
+    }
   }
 
   "list function" should "create lists" in {

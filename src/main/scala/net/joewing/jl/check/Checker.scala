@@ -2,11 +2,11 @@ package net.joewing.jl.check
 
 import net.joewing.jl._
 
-object Checker extends Runner[TypeResult, CheckerContext] {
+object Checker extends Runner[TypeResult, CheckerScope, CheckerContext] {
 
   protected def createContext(
       stack: List[ScopeId],
-      scopes: Map[ScopeId, Scope[TypeResult]]): CheckerContext = new CheckerContext(Map(), Map(), stack, scopes)
+      scopes: Map[ScopeId, CheckerScope]): CheckerContext = new CheckerContext(Map(), Map(), stack, scopes)
 
   val nil: TypeResult = NilTypeResult(InvalidToken())
 
@@ -26,9 +26,11 @@ object Checker extends Runner[TypeResult, CheckerContext] {
   }
 
   override def postprocess(context: CheckerContext, result: TypeResult): TypeResult = {
-    context.solve(result) match {
-      case _: UnknownTypeResult => InvalidTypeResult(result.token, s"could not resolve type of $result")
-      case other => other
+    val resultType = context.solve(result)
+    if (resultType.isUnknown) {
+      InvalidTypeResult(result.token, s"could not resolve type of $result")
+    } else {
+      resultType
     }
   }
 

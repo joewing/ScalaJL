@@ -1,11 +1,13 @@
 package net.joewing.jl
 
-abstract class Context[T, C <: Context[T, C]](
+abstract class Context[T, SCOPE <: Scope[T, SCOPE], CONTEXT <: Context[T, SCOPE, CONTEXT]](
     val stack: List[ScopeId],
-    protected val scopes: Map[ScopeId, Scope[T]]) {
-  self: C =>
+    protected val scopes: Map[ScopeId, SCOPE]) {
+  self: CONTEXT =>
 
-  protected def create(stack: List[ScopeId], scopes: Map[ScopeId, Scope[T]]): C
+  protected def create(stack: List[ScopeId], scopes: Map[ScopeId, SCOPE]): CONTEXT
+
+  def newScope: SCOPE
 
   private[this] def lookupStack(name: String, lst: List[ScopeId]): Option[T] = lst match {
     case id :: tl => scopes(id).values.get(name).orElse(lookupStack(name, tl))
@@ -14,7 +16,7 @@ abstract class Context[T, C <: Context[T, C]](
 
   def lookup(name: String): Option[T] = lookupStack(name, stack)
 
-  def updateScope(newValues: Map[String, T]): C = {
+  def updateScope(newValues: Map[String, T]): CONTEXT = {
     val scope = scopes(stack.head).update(newValues)
     val updatedScopes = scopes.updated(stack.head, scope)
     create(stack, updatedScopes)
@@ -22,23 +24,26 @@ abstract class Context[T, C <: Context[T, C]](
 
   def valueList(names: List[String]): List[T] = names.map { lookup(_).get }
 
-  def enterScope: C = {
-    val newScopeId = new ScopeId()
-    val scope = new Scope[T](newScopeId, Map())
-    create(newScopeId +: stack, scopes + (newScopeId -> scope))
+  def enterScope: CONTEXT = {
+    val scope = newScope
+    create(scope.id +: stack, scopes + (scope.id -> scope))
   }
 
-  def leaveScope: C = create(stack.tail, scopes)
+  def leaveScope: CONTEXT = create(stack.tail, scopes)
 
-  def map[A, B](lst: List[A])(f: (C, A) => (C, B)): (C, List[B]) = lst.foldLeft((this, List[B]())) { (acc, value) =>
-    val (oldContext, oldValues) = acc
-    val (newContext, newValue) = f(oldContext, value)
-    (newContext, oldValues :+ newValue)
+  def map[A, B](lst: List[A])(f: (CONTEXT, A) => (CONTEXT, B)): (CONTEXT, List[B]) = {
+    lst.foldLeft((this, List[B]())) { (acc, value) =>
+      val (oldContext, oldValues) = acc
+      val (newContext, newValue) = f(oldContext, value)
+      (newContext, oldValues :+ newValue)
+    }
   }
 
-  def fold[A, B](lst: List[A])(zero: B)(f: (C, B, A) => (C, B)) = lst.foldLeft((this, zero)) { (acc, value) =>
-    val (oldContext, oldValue) = acc
-    f(oldContext, oldValue, value)
+  def fold[A, B](lst: List[A])(zero: B)(f: (CONTEXT, B, A) => (CONTEXT, B)) = {
+    lst.foldLeft((this, zero)) { (acc, value) =>
+      val (oldContext, oldValue) = acc
+      f(oldContext, oldValue, value)
+    }
   }
 
 }

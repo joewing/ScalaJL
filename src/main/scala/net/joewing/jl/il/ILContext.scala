@@ -4,9 +4,10 @@ import net.joewing.jl._
 
 class ILContext(
     _stack: List[ScopeId],
-    _scopes: Map[ScopeId, Scope[Program]])
-  extends Context[Program, ILContext](_stack, _scopes) {
+    _scopes: Map[ScopeId, ILScope]
+  ) extends Context[Program, ILScope, ILContext](_stack, _scopes) {
 
-  override protected def create(stack: List[ScopeId], scopes: Map[ScopeId, Scope[Program]]): ILContext = ???
+  protected def create(stack: List[ScopeId], scopes: Map[ScopeId, ILScope]): ILContext = ???
 
+  def newScope: ILScope = new ILScope(new ScopeId(), Map())
 }

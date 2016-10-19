@@ -3,11 +3,14 @@ package net.joewing.jl.check
 import net.joewing.jl._
 import net.joewing.jl.functions.SpecialFunction
 
-class TypeId
+class TypeId {
+  override def toString = hashCode.toString
+}
 
 trait TypeResult {
   val token: Token
   def solve(context: CheckerContext): TypeResult = this
+  def isUnknown: Boolean = false
 }
 
 case class InvalidTypeResult(token: Token, msgs: List[String]) extends TypeResult {
@@ -16,7 +19,17 @@ case class InvalidTypeResult(token: Token, msgs: List[String]) extends TypeResul
 
 case class UnknownTypeResult(token: Token, id: TypeId) extends TypeResult {
   override def solve(context: CheckerContext): TypeResult = context.solve(token, id)
-  override def toString = "<unknown>"
+  override def isUnknown = true
+  override def toString = s"<unknown $id>"
+}
+
+case class AnyTypeResult(token: Token, id: TypeId) extends TypeResult {
+  override def solve(context: CheckerContext): TypeResult = context.solve(token, id)
+  override def toString = s"<any $id>"
+  override def equals(obj: Any): Boolean = obj match {
+    case a: AnyTypeResult => a.id == id
+    case _ => false
+  }
 }
 
 case class NilTypeResult(token: Token) extends TypeResult {
@@ -44,17 +57,32 @@ case class StringTypeResult(token: Token) extends TypeResult {
 }
 
 case class SpecialTypeResult(token: Token, func: SpecialFunction) extends TypeResult {
-  override def toString = "<special>"
+  override def toString = s"<special $func>"
   override def equals(obj: Any): Boolean = obj match {
     case s: SpecialTypeResult => s.func == func
+    case _: AnyTypeResult => true
     case _ => false
   }
   override def hashCode: Int = func.hashCode
 }
 
 case class LambdaTypeResult(token: Token, args: List[TypeResult], ret: TypeResult) extends TypeResult {
+
   override def solve(context: CheckerContext): TypeResult = {
     LambdaTypeResult(token, args.map(_.solve(context)), ret.solve(context))
+  }
+
+  override def isUnknown = ret.isUnknown || args.exists(_.isUnknown)
+
+  private[this] def fix(t: TypeResult): TypeResult = t match {
+    case UnknownTypeResult(unknownToken, id) => AnyTypeResult(unknownToken, id)
+    case _ => t
+  }
+
+  def fix(context: CheckerContext): LambdaTypeResult = {
+    val newArgs = args.map(arg => fix(arg.solve(context)))
+    val newRet = fix(ret.solve(context))
+    LambdaTypeResult(token, newArgs, newRet)
   }
 
   private[this] def argString = args.mkString(" -> ")
@@ -74,6 +102,8 @@ case class ListTypeResult(token: Token, contained: TypeResult) extends TypeResul
   override def solve(context: CheckerContext): TypeResult = {
     ListTypeResult(token, contained.solve(context))
   }
+
+  override def isUnknown = contained.isUnknown
 
   override def toString = s"list[$contained]"
 

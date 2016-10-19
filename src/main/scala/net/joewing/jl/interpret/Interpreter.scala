@@ -2,7 +2,7 @@ package net.joewing.jl.interpret
 
 import net.joewing.jl._
 
-object Interpreter extends Runner[ValueResult, InterpreterContext] {
+object Interpreter extends Runner[ValueResult, InterpreterScope, InterpreterContext] {
 
   private[this] def runSpecial(
       context: InterpreterContext,
@@ -61,7 +61,7 @@ object Interpreter extends Runner[ValueResult, InterpreterContext] {
 
   def createContext(
       stack: List[ScopeId],
-      scopes: Map[ScopeId, Scope[ValueResult]]): InterpreterContext = new InterpreterContext(stack, scopes)
+      scopes: Map[ScopeId, InterpreterScope]): InterpreterContext = new InterpreterContext(stack, scopes)
 
   val nil: ValueResult = NilValueResult()
 
