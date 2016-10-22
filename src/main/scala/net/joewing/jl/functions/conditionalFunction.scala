@@ -8,6 +8,8 @@ abstract class ConditionalFunction extends SpecialFunction {
 
   protected def test[T : Ordering](left: T, right: T): Boolean
 
+  val bah = scala.collection.immutable.HashMap(1 -> 2)
+
   import Ordering.Implicits._
 
   private implicit object ValueResultOrdering extends Ordering[ValueResult] {
